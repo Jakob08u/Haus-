@@ -119,6 +119,23 @@ describe('Wohnfläche nach WoFlV mit Dachschräge', () => {
     expect(cm.heightAt({ x: 1450, y: 2500 })).toBeCloseTo(2500, 0);
   });
 
+  it('Deckenhöhe je Raum: Wände und Schrägen nutzen die Höhe des jeweiligen Raums', () => {
+    const lvl = boxLevel(6000, 4000, 200, { ceilingHeight: 2500 });
+    lvl.walls.push({ id: 'mid', a: { x: 3000, y: -100 }, b: { x: 3000, y: 4100 }, thickness: 100, type: 'neu' });
+    lvl.rooms = [
+      { id: 'r1', name: 'Links', seed: { x: 1500, y: 2000 }, ceilingHeight: 2800 },
+      { id: 'r2', name: 'Rechts', seed: { x: 4500, y: 2000 } },
+    ];
+    // Schräge links mit waagrechter Tiefe 1,75 m: Anstieg 2,80 − 1,05 = 1,75 → 45°
+    lvl.walls.find((w) => w.id === 'left')!.slope = { side: 1, knee: 1050, mode: 'depth', pitchDeg: 0, slopeDepth: 1750 };
+    const cm = new CeilingModel(lvl);
+    expect(cm.heightAt({ x: 4500, y: 2000 })).toBeCloseTo(2500, 0);
+    expect(cm.heightAt({ x: 2500, y: 2000 })).toBeCloseTo(2800, 0);
+    expect(cm.heightAt({ x: 1000, y: 2000 })).toBeCloseTo(2050, 0);
+    // in der Trennwand gilt die höhere Decke (Wandoberkante)
+    expect(cm.heightAt({ x: 3000, y: 2000 })).toBeCloseTo(2800, 0);
+  });
+
   it('zwei Schrägen (Satteldach) überlagern sich korrekt', () => {
     const lvl = boxLevel(4000, 5000, 200, { ceilingHeight: 5000 });
     for (const id of ['left', 'right']) {
@@ -140,17 +157,21 @@ describe('Wohnfläche nach WoFlV mit Dachschräge', () => {
     const eg = project.levels.find((l) => l.id === 'eg')!;
     const knee = Object.fromEntries(og.walls.filter((w) => w.slope).map((w) => [w.id, w.slope!.knee]));
     expect(knee).toEqual({ og_w_schlaf_rechts: 1150, og_w_nische_aussen: 1030, og_w_buero_oben: 1050 });
-    expect(og.elevation).toBe(eg.elevation + eg.ceilingHeight + og.slabThickness);
+    expect(og.elevation).toBeGreaterThanOrEqual(eg.elevation + eg.ceilingHeight + og.slabThickness);
+    expect(eg.ceilingHeight).toBe(2600);
     const cm = new CeilingModel(og);
     const rooms = Object.fromEntries(detectRooms(og).map((r) => [r.name, { r, la: cm.livingArea(r.net) }]));
     expect(rooms['Büro'].la.minHeight).toBeCloseTo(1050, 0);
     expect(rooms['Schlafzimmer'].la.minHeight).toBeCloseTo(1030, 0);
-    expect(rooms['Bad'].la.minHeight).toBeCloseTo(2500, 0);
-    expect(rooms['Flur OG'].la.minHeight).toBeCloseTo(2500, 0);
-    // Büro: Schräge 1,67 m lang von 1,05 m bis 2,50 m → Neigung asin(1,45/1,67);
+    // Deckenhöhen je Raum laut Angabe
+    expect(rooms['Bad'].la.maxHeight).toBeCloseTo(2480, 0);
+    expect(rooms['Flur OG'].la.minHeight).toBeCloseTo(2480, 0);
+    expect(rooms['Büro'].la.maxHeight).toBeCloseTo(2790, 0);
+    expect(rooms['Schlafzimmer'].la.maxHeight).toBeCloseTo(2720, 0);
+    // Büro: Schräge 1,67 m tief von 1,05 m bis 2,79 m → tan α = 1,74 / 1,67;
     // Bereich 1,05–2,00 m (Tiefe 0,95 / tan α) zählt zur Hälfte über 6,38 m
-    const a = Math.asin(1.45 / 1.67);
-    expect(m2(rooms['Büro'].la.living)).toBeCloseTo(21.63 - 0.5 * (0.95 / Math.tan(a)) * 6.38, 1);
+    const tanA = 1.74 / 1.67;
+    expect(m2(rooms['Büro'].la.living)).toBeCloseTo(21.63 - 0.5 * (0.95 / tanA) * 6.38, 1);
     // Treppenloch OG liegt über der Treppe im EG
     const so = og.stairs[0], se = eg.stairs[0];
     expect(Math.hypot(so.x - se.x, so.y - se.y)).toBeLessThan(5);

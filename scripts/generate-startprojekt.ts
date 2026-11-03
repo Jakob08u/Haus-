@@ -78,11 +78,12 @@ const ogC = {
   nische: toUser({ x: 1100, y: -1800 }),
 };
 
-// Dachschrägen laut Angabe: Kniestock = Höhe, wo die Schräge beginnt; zweite Angabe als Länge der
-// Schräge (entlang der Fläche bis zur flachen Decke) gedeutet → Neigung ergibt sich aus der Deckenhöhe
-function slope(key: string, knee: number, slopeLength: number, towards: Vec2) {
+// Dachschrägen laut Angabe: Kniestock = Höhe, wo die Schräge beginnt; zweite Angabe = waagrechte Tiefe
+// der Schräge bis zur flachen Decke (als Länge entlang der Schräge wäre sie im Büro bei 2,79 m Decke
+// zu kurz). Die Neigung ergibt sich aus der Deckenhöhe des jeweiligen Raums.
+function slope(key: string, knee: number, slopeDepth: number, towards: Vec2) {
   const w = wallById(ogWalls, key);
-  w.slope = { side: sideOf(w, towards), knee, mode: 'length', slopeLength, pitchDeg: 45 };
+  w.slope = { side: sideOf(w, towards), knee, mode: 'depth', slopeDepth, pitchDeg: 45 };
 }
 slope('og_w_schlaf_rechts', 1150, 1870, ogC.schlaf);
 slope('og_w_nische_aussen', 1030, 1970, ogC.nische);
@@ -101,25 +102,21 @@ const ogOpenings: Opening[] = [
   door(ogWalls, 'og_w_schlaf_flur', 825, ogC.schlaf, 'a'),
   door(ogWalls, 'og_w_flur_buero', 1850, ogC.buero, 'b'),
   door(ogWalls, 'og_w_treppe_bad', 3640, ogC.bad, 'b', 760),
-  windowO(ogWalls, 'og_w_schlaf_unten', 2700, ogC.schlaf),
-  windowO(ogWalls, 'og_w_buero_links', 2900, ogC.buero),
-  windowO(ogWalls, 'og_w_bad_rechts', 1460, ogC.bad, 760, 1010, 1300),
-  windowO(ogWalls, 'og_w_flur_aussen', 1800, ogC.flur),
 ];
 
 const ogRooms: RoomMeta[] = [
-  { id: 'r_buero', name: 'Büro', seed: ogC.buero, usage: 'Büro', floor: { materialId: 'mat_vinyl_eiche', pattern: 'third', rotation: 0 } },
-  { id: 'r_flur_og', name: 'Flur OG', seed: ogC.flur, usage: 'Flur', floor: { materialId: 'mat_vinyl_eiche', pattern: 'third', rotation: 0 } },
+  { id: 'r_buero', name: 'Büro', seed: ogC.buero, usage: 'Büro', ceilingHeight: 2790, floor: { materialId: 'mat_vinyl_eiche', pattern: 'third', rotation: 0 } },
+  { id: 'r_flur_og', name: 'Flur OG', seed: ogC.flur, usage: 'Flur', ceilingHeight: 2480, floor: { materialId: 'mat_vinyl_eiche', pattern: 'third', rotation: 0 } },
   { id: 'r_bad_og', name: 'Bad', seed: ogC.bad, usage: 'Bad', floor: { materialId: 'mat_fliese_grau', pattern: 'half', rotation: 0 } },
-  { id: 'r_schlaf', name: 'Schlafzimmer', seed: ogC.schlaf, usage: 'Schlafen', floor: { materialId: 'mat_vinyl_eiche', pattern: 'third', rotation: 90 } },
+  { id: 'r_schlaf', name: 'Schlafzimmer', seed: ogC.schlaf, usage: 'Schlafen', ceilingHeight: 2720, floor: { materialId: 'mat_vinyl_eiche', pattern: 'third', rotation: 90 } },
 ];
 
 const stairCenter = toUser({ x: 4650, y: 1960 });
 const og: Level = {
   id: OG,
   name: 'Obergeschoss',
-  elevation: 2750,
-  ceilingHeight: 2500,
+  elevation: 3000,
+  ceilingHeight: 2480,
   slabThickness: 250,
   background: {
     // markierte Skizze (Schrägen blau, Treppe gelb), 3-fach vergrößert
@@ -136,12 +133,7 @@ const og: Level = {
   },
   walls: ogWalls,
   openings: ogOpenings,
-  // Dachfenster in den Schrägen (Kniestockwände sind zu niedrig für Wandfenster)
-  roofWindows: [
-    { id: 'og_rw_buero1', wallId: 'og_w_buero_oben', offset: 1700, width: 780, length: 1180, bottomHeight: 1150 },
-    { id: 'og_rw_buero2', wallId: 'og_w_buero_oben', offset: 5200, width: 780, length: 1180, bottomHeight: 1150 },
-    { id: 'og_rw_schlaf', wallId: 'og_w_schlaf_rechts', offset: 2300, width: 780, length: 1400, bottomHeight: 1250 },
-  ],
+  roofWindows: [],
   stairs: [
     {
       id: 'og_treppe',
@@ -150,7 +142,7 @@ const og: Level = {
       length: 2980,
       width: 1220,
       rotation: -90,
-      steps: 15,
+      steps: 16,
       isOpening: true,
       railing: { left: true, right: false, end: false },
       direction: 'up',
@@ -181,8 +173,9 @@ const og: Level = {
 }
 
 given('Schrägen beginnen laut Angabe bei: Schlafzimmer rechts 1,15 m, links (Nische) 1,03 m, Büro an der oberen Wand 1,05 m; Bad und Flur ohne Schräge.', OG);
-assume('Werte 1,87 / 1,97 / 1,67 m als Länge der Schräge gedeutet (entlang der Schräge bis zur flachen Decke). Daraus Neigung ca. 46° / 48° / 60°. Falls es die waagrechte Tiefe ist: Wand anklicken → „Tiefe der Schräge“.', OG);
-assume('Flache Decke im OG bei 2,50 m (die Schrägen laufen bis zu dieser Höhe; bestimmt auch die Neigung).', OG, 'level:og.ceilingHeight');
+given('Deckenhöhen OG laut Angabe: Flur 2,48 m, Büro 2,79 m, Schlafzimmer 2,72 m. EG: Decke auf 2,60 m abgehängt.', OG);
+assume('Werte 1,87 / 1,97 / 1,67 m als waagrechte Tiefe der Schräge bis zur flachen Decke gedeutet (als Länge entlang der Schräge passt es im Büro bei 2,79 m Decke nicht). Daraus Neigung ca. 40° (Schlafzimmer) und 46° (Büro).', OG);
+assume('Bad OG: Deckenhöhe wie Flur (2,48 m) angenommen.', OG, 'room:r_bad_og');
 assume('Beide Skizzen gleich ausgerichtet angenommen und für die Darstellung um 90° gedreht (Büro oben, Bad rechts, Schlafzimmer unten).', OG);
 assume('Lage OG über EG: linke Außenwand bündig, Treppenloch über dem Flur EG (OG dafür um 43 cm versetzt) – bitte prüfen; korrigierbar unter Eigenschaften → „Ebene verschieben/drehen“.', OG);
 assume('Außenwände 30 cm stark.', OG);
@@ -191,9 +184,9 @@ assume('Bad-Maße 2,69 × 2,29 m abgeleitet (nicht in der Skizze bemaßt).', OG,
 assume('Büro ragt 1,28 m über die Flurwand hinaus (6,38 m statt 5,10 m), Unterkante bündig mit Bad.', OG, 'room:r_buero');
 given('Alle Wände bleiben (Bestand). Neue Trockenbauwände werden selbst eingezeichnet (Werkzeug „Wand“, Typ „Neu (Trockenbau)“).', OG);
 assume('Türbreiten 88,5 cm (Bad 76 cm), Höhe 2,01 m, Aufschlag in den Raum.', OG);
-assume('Fenster und Dachfenster: nicht in der Skizze – Positionen und Größen geschätzt (Dachfenster 78 × 118/140 cm in den Schrägen).', OG);
-assume('Treppe: 15 Steigungen, Treppenloch 2,98 × 1,22 m, Austritt am Podest vor dem Büro.', OG, 'stair:og_treppe');
-assume('Geschosshöhe EG→OG 2,75 m (2,50 m Raumhöhe + 25 cm Decke).', OG, 'level:og.elevation');
+given('Fenster und Dachfenster werden selbst eingezeichnet (Werkzeuge „Fenster“ und „Dachf.“, Größe wählbar, umwandelbar).', OG);
+assume('Treppe: 16 Steigungen (je ca. 18,8 cm), Treppenloch 2,98 × 1,22 m, Austritt am Podest vor dem Büro.', OG, 'stair:og_treppe');
+assume('Geschosshöhe EG→OG 3,00 m (2,60 m abgehängte Decke + ca. 15 cm Abhängung + 25 cm Decke).', OG, 'level:og.elevation');
 assume('Möbel im Startprojekt sind Beispiele.', OG);
 
 // ---------------------------------------------------------------------------
@@ -241,18 +234,12 @@ const egOpenings: Opening[] = [
   door(egWalls, 'eg_w_flur_gaeste', 6350, egC.bad, 'b', 900),
   door(egWalls, 'eg_w_kueche_vorraum', 1050, egC.kueche, 'a', 885, 'passage'),
   door(egWalls, 'eg_w_vorraum_oben', 1050, egC.vorraum, 'a', 1010),
-  windowO(egWalls, 'eg_w_kueche_oben', 1400, egC.kueche, 1260, 1260, 900),
-  windowO(egWalls, 'eg_w_ess_oben', 2150, egC.ess, 1760, 1260, 900),
-  windowO(egWalls, 'eg_w_wohn_rechts', 2500, egC.wohn, 1760, 1260, 600),
-  windowO(egWalls, 'eg_w_wohn_rechts', 5100, egC.wohn, 1760, 1260, 600),
-  windowO(egWalls, 'eg_w_unten', 11550 - 2550, egC.gaeste, 1260, 1260, 900),
-  windowO(egWalls, 'eg_w_unten', 11550 - 6120, egC.bad, 760, 760, 1400),
 ];
 const eg: Level = {
   id: EG,
   name: 'Erdgeschoss',
   elevation: 0,
-  ceilingHeight: 2500,
+  ceilingHeight: 2600,
   slabThickness: 250,
   background: {
     src: dataUrl('grundriss/eg-unten-skizze.jpg'),
@@ -278,7 +265,7 @@ const eg: Level = {
       length: 2980,
       width: 1220,
       rotation: 0,
-      steps: 15,
+      steps: 16,
       isOpening: false,
       railing: { left: true, right: false, end: false },
       direction: 'up',
@@ -299,11 +286,10 @@ const eg: Level = {
   dimensions: [],
 };
 assume('Treppe im EG ist in der Skizze nicht eingezeichnet – angenommen im Flur EG unter dem Treppenloch des OG, Antritt Richtung Gäste-WC/Wohnen.', EG, 'stair:eg_treppe');
-assume('Raumhöhe EG 2,50 m, Außenwände 30 cm.', EG);
+assume('Außenwände EG 30 cm.', EG);
 assume('Schraffierte Mittelwand als 65 cm starke Bestandswand mit Öffnungen 90 cm (Laibung 60 cm), 1,25 m und 2,70 m.', EG, 'wall:eg_w_mittelwand');
 assume('Essen 4,02 × 4,62 m (Skizze 4,63 m; 1 cm angeglichen); Nische 1,00 × 0,30 m nicht modelliert.', EG, 'room:r_ess');
 assume('Bad EG 1,82 × 3,50 m abgeleitet; Wand Gäste/Bad 11,5 cm.', EG, 'room:r_bad_eg');
-assume('Fensterpositionen EG geschätzt.', EG);
 
 seedDemoElectrical(og, toUser);
 

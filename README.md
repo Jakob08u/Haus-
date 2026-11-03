@@ -39,8 +39,8 @@ Weitere Befehle:
   |---|---|
   | Auswahl | auswählen und verschieben |
   | Wand | zeichnen mit Fang auf Raster, 45°, Endpunkte und Wandachsen; Alt schaltet den Fang ab. Oben im Plan Typ und Stärke wählen (z. B. „Trockenbau 10“) |
-  | Tür, Fenster, Durchgang | in eine Wand setzen |
-  | Dachfenster | in eine Schräge setzen |
+  | Tür, Fenster, Durchgang | in eine Wand setzen; Fenstergröße oben in der Leiste wählen |
+  | Dachfenster | in eine Schräge setzen; Größe oben in der Leiste wählen |
   | Treppe | als Rechteck aufziehen |
   | Raum | einen Raum benennen |
   | Möbel, Elektro, Leitung | platzieren bzw. zeichnen |
@@ -122,17 +122,19 @@ Daraus erzeugt `scripts/generate-startprojekt.ts` die Datei `projekt.json`.
 
 Alle Annahmen stehen im Tab **Annahmen** und sind im Editor violett markiert. Die wichtigsten:
 
-1. **Dachschrägen im OG (deine Angabe):**
+1. **Dachschrägen und Deckenhöhen im OG (deine Angaben):**
 
-   | Raum | Wand | Schräge beginnt bei (Kniestock) | Länge der Schräge | ergibt Neigung |
+   | Raum | Schräge beginnt bei | Tiefe der Schräge (waagrecht) | flache Decke | ergibt Neigung |
    |---|---|---|---|---|
-   | Schlafzimmer | rechts | 1,15 m | 1,87 m | ca. 46° |
-   | Schlafzimmer | links (Nische) | 1,03 m | 1,97 m | ca. 48° |
-   | Büro | oben | 1,05 m | 1,67 m | ca. 60° |
-   | Bad, Flur | – | keine Schräge | | |
+   | Schlafzimmer rechts | 1,15 m | 1,87 m | 2,72 m | ca. 40° |
+   | Schlafzimmer links (Nische) | 1,03 m | 1,97 m | 2,72 m | ca. 41° |
+   | Büro oben | 1,05 m | 1,67 m | 2,79 m | ca. 46° |
+   | Flur | keine Schräge | – | 2,48 m | – |
+   | Bad | keine Schräge | – | 2,48 m (angenommen wie Flur) | – |
 
-   Angenommen: Die zweite Angabe ist die Länge entlang der Schräge bis zur flachen Decke, und die flache Decke im OG liegt bei 2,50 m. Daraus rechnet die App die Neigung. Ist es stattdessen die waagrechte Tiefe: Wand anklicken → „Angabe über: Tiefe der Schräge“. Geschosshöhe EG → OG 2,75 m.
-   In den Schrägen sitzen geschätzte Dachfenster (78 × 118 bzw. 78 × 140 cm).
+   Erdgeschoss: Decke auf 2,60 m abgehängt. Die 1,87 / 1,97 / 1,67 m sind als waagrechte Tiefe gedeutet – als Länge entlang der Schräge wären sie im Büro (Anstieg 1,74 m) zu kurz. Umstellbar: Wand anklicken → „Angabe über“. Deckenhöhe je Raum: Raum anklicken → „Deckenhöhe (Raum)“.
+   Geschosshöhe EG → OG angenommen 3,00 m (2,60 m + Abhängung + Decke), Treppe 16 Steigungen.
+   **Fenster und Dachfenster** setzt du selbst: Werkzeug „Fenster“ bzw. „Dachf.“, Größe oben in der Leiste wählen (Standardgrößen oder eigene Maße). Ein Fenster lässt sich in den Eigenschaften in ein Dachfenster umwandeln (und zurück). „Passt alles?“ meldet Fenster, die über den Kniestock ragen, und Dachfenster, die nicht in die Schräge passen.
 2. **Orientierung:** Beide Skizzen sind gleich ausgerichtet angenommen und für die Darstellung um 90° gedreht, damit im OG Büro oben, Bad rechts und Schlafzimmer unten liegt.
 3. **Lage OG über EG:** linke Außenwand bündig, das Treppenloch des OG liegt über dem Flur EG (OG dafür um 43 cm versetzt). Die Skizzen sind nicht maßstäblich – bitte prüfen und bei Bedarf mit *Ebene verschieben / drehen* korrigieren.
 4. **Treppe EG:** in der Skizze nicht eingezeichnet; angenommen im Flur EG direkt unter dem Treppenloch, 15 Steigungen.
@@ -144,8 +146,7 @@ Alle Annahmen stehen im Tab **Annahmen** und sind im Editor violett markiert. Di
 6. **Bad OG:** 2,69 × 2,29 m, abgeleitet.
 7. **Büro:** ragt 1,28 m über die Flurwand hinaus.
 8. **Wände:** Alle Wände bleiben (Bestand, deine Angabe). Neue Trockenbauwände zeichnest du selbst ein.
-9. **Fenster:** nicht in den Skizzen, Positionen geschätzt.
-10. **Beispiele:** Möbel, Elektro und Oberflächen im Startprojekt sind Beispiele, frei löschbar.
+9. **Beispiele:** Möbel, Elektro und Oberflächen im Startprojekt sind Beispiele, frei löschbar.
 
 Die Skizzen sind nicht maßstäblich. Der Hintergrund ist deshalb nur grob überlagert (mit Verzerrung H/B). Einen maßstäblichen Plan lädst du über *Bild/PDF laden* und richtest ihn mit *Kalibrieren* aus.
 

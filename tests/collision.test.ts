@@ -107,4 +107,27 @@ describe('Kollisionsprüfung', () => {
     l.furniture[0] = newFurniture('bett', 450 + 50, 1500, { width: 900, depth: 2000, id: 'b' });
     expect(msgs(l).filter((m) => m.startsWith('bewegung'))).toEqual([]);
   });
+
+  it('Wandfenster höher als der Kniestock wird gemeldet, passendes nicht', () => {
+    const l = boxLevel(4000, 4000, 200, { ceilingHeight: 2500 });
+    const left = l.walls.find((w) => w.id === 'left')!;
+    left.slope = { side: 1, knee: 1050, mode: 'pitch', pitchDeg: 45 };
+    l.openings.push({ id: 'win', type: 'window', wallId: 'left', offset: 2000, width: 1000, height: 1200, sill: 900, swing: 1 });
+    expect(msgs(l).some((m) => m.startsWith('fenster') && m.includes('höher als die Wand'))).toBe(true);
+    l.openings[0] = { ...l.openings[0], height: 600, sill: 400 };
+    expect(msgs(l).some((m) => m.startsWith('fenster'))).toBe(false);
+  });
+
+  it('Dachfenster muss in die Schräge passen', () => {
+    const l = boxLevel(4000, 4000, 200, { ceilingHeight: 2500 });
+    const left = l.walls.find((w) => w.id === 'left')!;
+    left.slope = { side: 1, knee: 1050, mode: 'pitch', pitchDeg: 45 };
+    // Schräge von 1,05 m bis 2,50 m: entlang der Schräge 1,45 × √2 ≈ 2,05 m
+    l.roofWindows.push({ id: 'rw', wallId: 'left', offset: 2000, width: 780, length: 1400, bottomHeight: 1150 });
+    expect(msgs(l).some((m) => m.startsWith('fenster'))).toBe(false);
+    l.roofWindows[0] = { ...l.roofWindows[0], length: 2000 };
+    expect(msgs(l).some((m) => m.includes('ragt über die Schräge'))).toBe(true);
+    l.roofWindows[0] = { ...l.roofWindows[0], wallId: 'top', length: 1180 };
+    expect(msgs(l).some((m) => m.includes('ohne Dachschräge'))).toBe(true);
+  });
 });

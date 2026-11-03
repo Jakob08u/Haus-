@@ -95,7 +95,7 @@ export function wallFaces(level: Level): FaceInfo[] {
       const probe = add(mul(add(pa, pb), 0.5), mul(n, side * 150));
       const room = roomAt(D.rooms, probe);
       if (!room) continue; // Außenseite
-      const prof = D.ceiling.profile(pa, pb).map((p) => ({ s: p.s, h: w.height ? Math.min(w.height, p.h) : p.h }));
+      const prof = D.ceiling.profile(pa, pb, room.meta?.ceilingHeight ?? level.ceilingHeight).map((p) => ({ s: p.s, h: w.height ? Math.min(w.height, p.h) : p.h }));
       const heightAt = (s: number) => {
         for (let i = 0; i < prof.length - 1; i++) {
           const a = prof[i], b = prof[i + 1];

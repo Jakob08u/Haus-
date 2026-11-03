@@ -1,7 +1,7 @@
 import type { Level, Slope, Vec2, Wall } from '../model/types';
 import { clipHalfPlane, triangulate, type Multi, type Ring } from './polygon';
-import { polygonArea, polygonCentroid, sub, dot, norm, perp, dist, bbox } from './vec';
-import { plannedWalls } from './rooms';
+import { polygonArea, polygonCentroid, sub, dot, norm, perp, dist, bbox, pointInPolygon, pointSegDist } from './vec';
+import { plannedWalls, detectRooms, interiorPoint, type DetectedRoom } from './rooms';
 
 /** Affine Höhenfunktion h(p) = ax*x + ay*y + c (mm) */
 export interface Affine { ax: number; ay: number; c: number }
@@ -59,7 +59,11 @@ export function slopePitch(s: Slope, ceilingHeight = 2500): number {
   return s.pitchDeg;
 }
 
-export function slopePlanes(walls: Wall[], ceilingHeight = 2500): SlopePlane[] {
+/**
+ * Schrägen-Ebenen. heightFor liefert die flache Deckenhöhe im Raum vor der Wand
+ * (nötig, wenn die Neigung über Länge/Tiefe der Schräge angegeben ist).
+ */
+export function slopePlanes(walls: Wall[], heightFor: number | ((probe: Vec2) => number) = 2500): SlopePlane[] {
   const planes: SlopePlane[] = [];
   for (const w of walls) {
     if (!w.slope) continue;
@@ -72,7 +76,9 @@ export function slopePlanes(walls: Wall[], ceilingHeight = 2500): SlopePlane[] {
     const half = w.thickness / 2;
     const innerA = { x: w.a.x + inn.x * half, y: w.a.y + inn.y * half };
     const innerB = { x: w.b.x + inn.x * half, y: w.b.y + inn.y * half };
-    const pitch = Math.max(1, Math.min(89, slopePitch(w.slope, ceilingHeight)));
+    const probe = { x: (innerA.x + innerB.x) / 2 + inn.x * 300, y: (innerA.y + innerB.y) / 2 + inn.y * 300 };
+    const H = typeof heightFor === 'number' ? heightFor : heightFor(probe);
+    const pitch = Math.max(1, Math.min(89, slopePitch(w.slope, H)));
     const tan = Math.tan((pitch * Math.PI) / 180);
     // h = knee + tan * (inn·(p - innerA))
     const fn: Affine = { ax: tan * inn.x, ay: tan * inn.y, c: w.slope.knee - tan * (inn.x * innerA.x + inn.y * innerA.y) };
@@ -93,23 +99,53 @@ const inDomain = (pl: SlopePlane, p: Vec2) => pl.domain.every((h) => h.nx * p.x 
 
 export class CeilingModel {
   planes: SlopePlane[];
+  /** Deckenhöhe der Ebene (Standard für Räume ohne eigene Höhe) */
   H: number;
-  constructor(public level: Level) {
-    this.planes = slopePlanes(plannedWalls(level), level.ceilingHeight);
+  rooms: { clear: Multi; H: number; bb: ReturnType<typeof bbox> }[];
+  constructor(public level: Level, detected?: DetectedRoom[]) {
     this.H = level.ceilingHeight;
+    const rs = detected ?? detectRooms(level);
+    this.rooms = rs.map((r) => ({ clear: r.clear, H: r.meta?.ceilingHeight ?? level.ceilingHeight, bb: bbox(r.clear.flatMap((p) => p[0])) }));
+    this.planes = slopePlanes(plannedWalls(level), (p) => this.roomHeightAt(p) ?? this.H);
   }
 
-  heightAt(p: Vec2): number {
-    let h = this.H;
+  /** flache Deckenhöhe des Raums, in dem p liegt */
+  roomHeightAt(p: Vec2): number | undefined {
+    for (const r of this.rooms) {
+      if (p.x < r.bb.minX || p.x > r.bb.maxX || p.y < r.bb.minY || p.y > r.bb.maxY) continue;
+      if (r.clear.some((poly) => pointInPolygon(p, poly[0]) && !poly.slice(1).some((h) => pointInPolygon(p, h)))) return r.H;
+    }
+    return undefined;
+  }
+
+  /** flache Deckenhöhe an p; in Wänden die größte Höhe der angrenzenden Räume */
+  flatAt(p: Vec2): number {
+    const h = this.roomHeightAt(p);
+    if (h != null) return h;
+    let best = -Infinity;
+    for (const r of this.rooms) {
+      if (r.H <= best) continue;
+      if (p.x < r.bb.minX - 600 || p.x > r.bb.maxX + 600 || p.y < r.bb.minY - 600 || p.y > r.bb.maxY + 600) continue;
+      let near = false;
+      for (const poly of r.clear)
+        for (const ring of poly)
+          for (let i = 0; i < ring.length && !near; i++) if (pointSegDist(p, ring[i], ring[(i + 1) % ring.length]) <= 600) near = true;
+      if (near) best = r.H;
+    }
+    return isFinite(best) ? best : this.H;
+  }
+
+  heightAt(p: Vec2, H?: number): number {
+    let h = H ?? this.flatAt(p);
     for (const pl of this.planes) if (inDomain(pl, p)) h = Math.min(h, evalA(pl.fn, p));
     return h;
   }
 
   /** Stückweise affine Zerlegung eines Gebiets: konvexe Teile mit zugehöriger Höhenfunktion */
-  pieces(region: Multi): { poly: Ring; fn: Affine }[] {
+  pieces(region: Multi, H?: number): { poly: Ring; fn: Affine }[] {
     const out: { poly: Ring; fn: Affine }[] = [];
-    const flat: Affine = { ax: 0, ay: 0, c: this.H };
     for (const poly of region) {
+      const flat: Affine = { ax: 0, ay: 0, c: H ?? this.flatAt(interiorPoint(poly[0], poly.slice(1))) };
       const bb = bbox(poly[0]);
       const rel = this.planes.filter((pl) => {
         // grob: Gebiet schneidet Domäne (Ecken der BBox prüfen + Mitte)
@@ -154,9 +190,9 @@ export class CeilingModel {
    * Wohnfläche nach WoFlV §4: lichte Höhe ≥ 2 m voll, 1–2 m zur Hälfte, < 1 m nicht.
    * Liefert Flächen in mm².
    */
-  livingArea(region: Multi) {
+  livingArea(region: Multi, H?: number) {
     let total = 0, ge1 = 0, ge2 = 0, minH = Infinity, maxH = -Infinity;
-    for (const { poly, fn } of this.pieces(region)) {
+    for (const { poly, fn } of this.pieces(region, H)) {
       total += polygonArea(poly);
       const a1 = clipHalfPlane(poly, fn.ax, fn.ay, fn.c - 1000);
       const a2 = clipHalfPlane(poly, fn.ax, fn.ay, fn.c - 2000);
@@ -182,12 +218,13 @@ export class CeilingModel {
   }
 
   /** Höhenprofil entlang einer Strecke (exakte Knickpunkte) */
-  profile(a: Vec2, b: Vec2): { s: number; h: number }[] {
+  profile(a: Vec2, b: Vec2, H?: number): { s: number; h: number }[] {
     const L = dist(a, b);
-    if (L < 1e-6) return [{ s: 0, h: this.heightAt(a) }];
+    const Hc = H ?? this.flatAt({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+    if (L < 1e-6) return [{ s: 0, h: this.heightAt(a, Hc) }];
     const d = { x: (b.x - a.x) / L, y: (b.y - a.y) / L };
     const at = (s: number) => ({ x: a.x + d.x * s, y: a.y + d.y * s });
-    const fns: Affine[] = [{ ax: 0, ay: 0, c: this.H }, ...this.planes.map((p) => p.fn)];
+    const fns: Affine[] = [{ ax: 0, ay: 0, c: Hc }, ...this.planes.map((p) => p.fn)];
     const cand = new Set<number>([0, L]);
     // Schnitte der Funktionen entlang der Linie
     const lin = fns.map((f) => ({ h0: evalA(f, a), k: f.ax * d.x + f.ay * d.y }));
@@ -210,7 +247,7 @@ export class CeilingModel {
         }
       }
     const ss = [...cand].sort((x, y) => x - y);
-    const pts = ss.map((s) => ({ s, h: this.heightAt(at(s)) }));
+    const pts = ss.map((s) => ({ s, h: this.heightAt(at(s), Hc) }));
     // kollineare Punkte entfernen
     const out: { s: number; h: number }[] = [];
     for (const p of pts) {
@@ -227,11 +264,12 @@ export class CeilingModel {
   /** minimale Deckenhöhe über einem konvexen Grundriss (z. B. Möbel) – Minimum liegt an Ecken bzw. Domänengrenzen */
   minOver(poly: Vec2[]): number {
     let m = Infinity;
-    for (let i = 0; i < poly.length; i++) {
-      for (const p of this.profile(poly[i], poly[(i + 1) % poly.length])) m = Math.min(m, p.h);
-    }
     const c = polygonCentroid(poly);
-    m = Math.min(m, this.heightAt(c));
+    const H = this.flatAt(c);
+    for (let i = 0; i < poly.length; i++) {
+      for (const p of this.profile(poly[i], poly[(i + 1) % poly.length], H)) m = Math.min(m, p.h);
+    }
+    m = Math.min(m, this.heightAt(c, H));
     return m;
   }
 }

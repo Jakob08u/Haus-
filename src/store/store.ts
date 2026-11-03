@@ -44,6 +44,10 @@ interface State {
     furnitureCategory: FurnitureCategory;
     /** Vorlage beim Platzieren (z. B. aus Link-Import) */
     furnitureTemplate: Partial<Furniture> | null;
+    /** Maße für das nächste Fenster (B, H, Brüstung) */
+    windowSize: { width: number; height: number; sill: number };
+    /** Maße für das nächste Dachfenster (B, Länge entlang der Schräge, Unterkante über Fußboden) */
+    roofWindowSize: { width: number; length: number; bottomHeight: number };
     openingType: OpeningType;
   };
   view3d: { mode: 'orbit' | 'walk'; showCeiling: boolean; showRoof: boolean; allLevels: boolean; sun: number; lampsOn: boolean };
@@ -115,6 +119,8 @@ export const useStore = create<State>((set, get) => ({
     lineHeight: 300,
     furnitureCategory: 'schrank',
     furnitureTemplate: null,
+    windowSize: { width: 1000, height: 1200, sill: 900 },
+    roofWindowSize: { width: 780, length: 1180, bottomHeight: 1100 },
     openingType: 'door',
   },
   view3d: { mode: 'orbit', showCeiling: true, showRoof: false, allLevels: false, sun: 0.65, lampsOn: true },

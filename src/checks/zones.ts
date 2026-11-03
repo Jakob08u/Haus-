@@ -108,7 +108,10 @@ export function checkSymbolZone(level: Level, walls: Wall[], ceiling: CeilingMod
   const loc = e.wallId ? locateOnWall(walls.filter((w) => w.id === e.wallId), e, 400) : locateOnWall(walls, e, 150);
   if (!loc) return null;
   const vz = verticalZones(level, loc.wall, loc.side, walls, fps?.get(loc.wall.id));
-  const hz = horizontalZonesAt(ceilingAtWall(ceiling, e), !!e.aboveWorktop || isWorktopRoom(rooms, e));
+  // Deckenhöhe etwas vor der Wand (im Raum) messen
+  const wd = norm(sub(loc.wall.b, loc.wall.a));
+  const into = { x: e.x - wd.y * loc.side * 120, y: e.y + wd.x * loc.side * 120 };
+  const hz = horizontalZonesAt(ceilingAtWall(ceiling, into), !!e.aboveWorktop || isWorktopRoom(rooms, into));
   const inH = hz.some(([a, b]) => e.height >= a - 1 && e.height <= b + 1);
   const inV = inIntervals(loc.s, vz.vertical);
   if (inH || inV) return null;

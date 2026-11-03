@@ -30,7 +30,7 @@ export function seedDemoElectrical(og: Level, _toUser: (p: Vec2) => Vec2) {
     });
     return p;
   };
-  const ceiling = (x: number, y: number, kind: ElecKind, label?: string) => og.electrical.push({ id: id('e'), kind, x, y, height: og.ceilingHeight, label });
+  const ceiling = (x: number, y: number, kind: ElecKind, label: string | undefined, height: number) => og.electrical.push({ id: id('e'), kind, x, y, height, label });
   const line = (kind: LineKind, surface: LineSurface, pts: [number, number, number][], label?: string) =>
     og.lines.push({ id: id('l'), kind, surface, label, points: pts.map(([x, y, z]): LinePoint => ({ x, y, z })) });
 
@@ -40,9 +40,9 @@ export function seedDemoElectrical(og: Level, _toUser: (p: Vec2) => Vec2) {
   onWall('og_w_buero_oben', 4400 - 2420, buero, 'steckdose3', 300, { label: 'Schreibtisch links' });
   onWall('og_w_buero_oben', 5600 - 2420, buero, 'steckdose2', 300, { label: 'Schreibtisch rechts' });
   onWall('og_w_buero_oben', 5000 - 2420, buero, 'lan', 300, { label: 'Netzwerk' });
-  ceiling(5760, 2000, 'lampe', 'Büro');
+  ceiling(5760, 2000, 'lampe', 'Büro', 2790);
   line('strom', 'wand', [[4907, 3675, 1050], [4907, 3675, 2200]], 'Schalterleitung Büro');
-  line('strom', 'decke', [[4907, 3675, og.ceilingHeight], [4907, 2000, og.ceilingHeight], [5760, 2000, og.ceilingHeight]], 'Deckenauslass Büro');
+  line('strom', 'decke', [[4907, 3675, 2790], [4907, 2000, 2790], [5760, 2000, 2790]], 'Deckenauslass Büro');
   line('strom', 'wand', [[4400, 315, 300], [5600, 315, 300]], 'Steckdosen Schreibtisch');
   line('lan', 'wand', [[5000, 315, 300], [2720, 315, 300]], 'LAN zur Ecke');
 
@@ -51,23 +51,23 @@ export function seedDemoElectrical(og: Level, _toUser: (p: Vec2) => Vec2) {
   onWall('og_w_schlaf_flur', 5167 - 3700, schlaf, 'schalter', 1050, { label: 'Licht Schlafen' });
   onWall('og_w_schlaf_flur', 5400 - 3700, schlaf, 'steckdose2', 300, { label: 'Bett links' });
   onWall('og_w_schlaf_flur', 6400 - 3700, schlaf, 'steckdose2', 300, { label: 'Bett rechts' });
-  ceiling(5600, 9800, 'lampe', 'Schlafen');
-  ceiling(4600, 10300, 'rauchmelder');
+  ceiling(5600, 9800, 'lampe', 'Schlafen', 2720);
+  ceiling(4600, 10300, 'rauchmelder', undefined, 2720);
   line('strom', 'wand', [[5400, 8305, 300], [6400, 8305, 300]], 'Steckdosen Bett');
 
   // Bad (Türwand X = 6660, Wand zum Büro Y = 3990)
   const bad = { x: 7800, y: 5300 };
   onWall('og_w_treppe_bad', 8190 - 5130, bad, 'schalter', 1050, { label: 'Licht Bad' });
   onWall('og_w_flur_buero', 8450 - 3700, bad, 'steckdose1', 1150, { label: 'Spiegel', aboveWorktop: true });
-  ceiling(7800, 5300, 'lampe', 'Bad');
+  ceiling(7800, 5300, 'lampe', 'Bad', 2480);
   line('wasser_kalt', 'wand', [[7920, 4005, 550], [7920, 4005, 200], [6700, 4005, 200]], 'Kaltwasser Waschbecken');
   line('wasser_warm', 'wand', [[8080, 4005, 550], [8080, 4005, 260], [6700, 4005, 260]], 'Warmwasser Waschbecken');
   line('abwasser', 'wand', [[8000, 4005, 550], [8000, 4005, 120], [8935, 4005, 120], [8935, 4700, 120], [8935, 4700, 230]], 'Abwasser WB → WC-Strang');
 
   // Flur
-  ceiling(4500, 5600, 'lampe', 'Flur');
-  ceiling(4500, 7200, 'rauchmelder');
+  ceiling(4500, 5600, 'lampe', 'Flur', 2480);
+  ceiling(4500, 7200, 'rauchmelder', undefined, 2480);
 
-  // Heizkörper unter dem Giebelfenster im Schlafzimmer
+  // Heizkörper im Schlafzimmer
   og.furniture.push(newFurniture('heizkoerper', 6400, 11185, { name: 'Heizkörper (Beispiel)', width: 800, depth: 100, height: 600, elevation: 150, rotation: 180 }));
 }

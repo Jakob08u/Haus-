@@ -9,6 +9,8 @@ import { snapToNearestWall } from '../../plan2d/geom2d';
 import { roomStats } from '../../calc/roomStats';
 import { deleteSelection, rotateSelection } from '../actions';
 import { FurnitureEditor } from './FurnitureEditor';
+import { WINDOW_PRESETS, ROOF_WINDOW_PRESETS } from '../../plan2d/Plan2D';
+import { uid } from '../../geometry/vec';
 import { splitWall, splitWallAtJunctions, transformLevel } from '../../model/ops';
 import { useState } from 'react';
 
@@ -233,13 +235,13 @@ function WallProps({ id }: { id: string }) {
           {w.slope.mode === 'length' && (
             <>
               <Field label="Länge der Schräge"><NumInput value={w.slope.slopeLength} onChange={(v) => upd((l) => void (l.walls.find((x) => x.id === id)!.slope!.slopeLength = v))} /></Field>
-              <div className="hint">gemessen entlang der Schräge vom Kniestock bis zur flachen Decke ({fmtCm(level.ceilingHeight)} cm) → {slopePitch(w.slope, level.ceilingHeight).toFixed(1).replace('.', ',')}° Neigung</div>
+              <div className="hint">gemessen entlang der Schräge vom Kniestock bis zur flachen Decke des Raums → {(D.ceiling.planes.find((p) => p.wallId === w.id)?.pitchDeg ?? slopePitch(w.slope, level.ceilingHeight)).toFixed(1).replace('.', ',')}° Neigung</div>
             </>
           )}
           {w.slope.mode === 'depth' && (
             <>
               <Field label="Tiefe der Schräge"><NumInput value={w.slope.slopeDepth} onChange={(v) => upd((l) => void (l.walls.find((x) => x.id === id)!.slope!.slopeDepth = v))} /></Field>
-              <div className="hint">waagrecht von der Kniestockwand bis zur flachen Decke ({fmtCm(level.ceilingHeight)} cm) → {slopePitch(w.slope, level.ceilingHeight).toFixed(1).replace('.', ',')}° Neigung</div>
+              <div className="hint">waagrecht von der Kniestockwand bis zur flachen Decke des Raums → {(D.ceiling.planes.find((p) => p.wallId === w.id)?.pitchDeg ?? slopePitch(w.slope, level.ceilingHeight)).toFixed(1).replace('.', ',')}° Neigung</div>
             </>
           )}
           {w.slope.mode === 'length' || w.slope.mode === 'depth' ? null : w.slope.mode === 'pitch' ? (
@@ -248,7 +250,7 @@ function WallProps({ id }: { id: string }) {
             <>
               <Field label="Firsthöhe"><NumInput value={w.slope.ridgeHeight} onChange={(v) => upd((l) => void (l.walls.find((x) => x.id === id)!.slope!.ridgeHeight = v))} /></Field>
               <Field label="Abstand Wand→First"><NumInput value={w.slope.ridgeDistance} onChange={(v) => upd((l) => void (l.walls.find((x) => x.id === id)!.slope!.ridgeDistance = v))} /></Field>
-              <div className="hint">ergibt {slopePitch(w.slope, level.ceilingHeight).toFixed(1).replace('.', ',')}° Neigung</div>
+              <div className="hint">ergibt {(D.ceiling.planes.find((p) => p.wallId === w.id)?.pitchDeg ?? slopePitch(w.slope, level.ceilingHeight)).toFixed(1).replace('.', ',')}° Neigung</div>
             </>
           )}
         </>
@@ -289,6 +291,35 @@ function OpeningProps({ id }: { id: string }) {
       <Field label="Breite (Rohbau)"><NumInput value={o.width} min={100} onChange={(v) => set((x) => void (x.width = v))} /></Field>
       <Field label="Höhe"><NumInput value={o.height} min={100} onChange={(v) => set((x) => void (x.height = v))} /></Field>
       {o.type === 'window' && <Field label="Brüstung"><NumInput value={o.sill} onChange={(v) => set((x) => void (x.sill = v))} /></Field>}
+      {o.type === 'window' && (
+        <>
+          <Field label="Standardgröße">
+            <select value="" onChange={(e) => { const p = WINDOW_PRESETS.find((x) => x.label === e.target.value); if (p) set((x) => Object.assign(x, { width: p.width, height: p.height, sill: p.sill })); }}>
+              <option value="">wählen …</option>
+              {WINDOW_PRESETS.map((p) => <option key={p.label} value={p.label}>{p.label} cm</option>)}
+            </select>
+          </Field>
+          <div className="row">
+            <button
+              disabled={!w.slope}
+              title={w.slope ? 'Als Dachfenster in die Schräge über dieser Wand setzen' : 'Nur an Wänden mit Dachschräge möglich'}
+              onClick={() => {
+                const nid = uid('rw');
+                upd((l) => {
+                  const op = l.openings.find((x) => x.id === id)!;
+                  const ww = l.walls.find((x) => x.id === op.wallId)!;
+                  l.roofWindows.push({ id: nid, wallId: op.wallId, offset: op.offset, width: Math.min(op.width, 1140), length: Math.max(780, Math.min(op.height, 1400)), bottomHeight: Math.max((ww.slope?.knee ?? 0) + 50, 1100) });
+                  l.openings = l.openings.filter((x) => x.id !== id);
+                });
+                useStore.getState().select({ kind: 'roofWindow', id: nid });
+              }}
+            >
+              In Dachfenster umwandeln
+            </button>
+            {!w.slope && <span className="hint">nur an Wänden mit Schräge</span>}
+          </div>
+        </>
+      )}
       <Field label="Abstand Wandanfang"><NumInput value={o.offset - o.width / 2} onChange={(v) => set((x) => void (x.offset = Math.max(x.width / 2, Math.min(L - x.width / 2, v + x.width / 2))))} /></Field>
       <Field label="Abstand Wandende"><NumInput value={L - o.offset - o.width / 2} onChange={(v) => set((x) => void (x.offset = Math.max(x.width / 2, Math.min(L - x.width / 2, L - v - x.width / 2))))} /></Field>
       {o.type !== 'passage' && (
@@ -316,7 +347,29 @@ function RoofWindowProps({ id }: { id: string }) {
       <Field label="Länge (Schräge)"><NumInput value={rw.length} onChange={(v) => set((x) => void (x.length = v))} /></Field>
       <Field label="Unterkante über FFB"><NumInput value={rw.bottomHeight} onChange={(v) => set((x) => void (x.bottomHeight = v))} /></Field>
       <Field label="Position entlang Wand"><NumInput value={rw.offset} onChange={(v) => set((x) => void (x.offset = v))} /></Field>
-      <div className="hint">Typische Größen: 55×78, 66×118, 78×118, 78×140, 114×118 cm.</div>
+      <Field label="Standardgröße">
+        <select value="" onChange={(e) => { const p = ROOF_WINDOW_PRESETS.find((x) => x.label === e.target.value); if (p) set((x) => Object.assign(x, { width: p.width, length: p.length })); }}>
+          <option value="">wählen …</option>
+          {ROOF_WINDOW_PRESETS.map((p) => <option key={p.label} value={p.label}>{p.label} cm</option>)}
+        </select>
+      </Field>
+      <button
+        onClick={() => {
+          const nid = uid('o');
+          upd((l) => {
+            const r = l.roofWindows.find((x) => x.id === id)!;
+            const ww = l.walls.find((x) => x.id === r.wallId)!;
+            const knee = ww.slope?.knee ?? 2000;
+            // in die Wand darunter; Höhe so, dass es unter dem Schrägenansatz bleibt
+            const height = Math.max(400, Math.min(1200, knee - 300));
+            l.openings.push({ id: nid, type: 'window', wallId: r.wallId, offset: r.offset, width: r.width, height, sill: Math.max(0, Math.min(900, knee - height - 100)), hinge: 'a', swing: ww.slope?.side ?? 1 });
+            l.roofWindows = l.roofWindows.filter((x) => x.id !== id);
+          });
+          useStore.getState().select({ kind: 'opening', id: nid });
+        }}
+      >
+        In Wandfenster umwandeln
+      </button>
       <Footer />
     </div>
   );
@@ -361,6 +414,10 @@ function RoomProps({ id }: { id: string }) {
       <h3>Raum „{meta.name}“ <AssumeTag show={assumed} /></h3>
       <Field label="Name"><TextInput value={meta.name} onChange={(v) => set((x) => void (x.name = v))} /></Field>
       <Field label="Nutzung"><TextInput value={meta.usage ?? ''} placeholder="z. B. Bad, Küche" onChange={(v) => set((x) => void (x.usage = v))} /></Field>
+      <Field label="Deckenhöhe (Raum)">
+        <NumInput value={meta.ceilingHeight ?? level.ceilingHeight} min={1000} onChange={(v) => set((x) => void (x.ceilingHeight = v))} />
+        {meta.ceilingHeight != null && <button title="Deckenhöhe der Ebene verwenden" onClick={() => set((x) => void delete x.ceilingHeight)}>↺ Ebene ({fmtCm(level.ceilingHeight)})</button>}
+      </Field>
       <Field label="Deckenfarbe"><input type="color" value={meta.ceilingColor ?? '#f8f8f6'} onChange={(e) => set((x) => void (x.ceilingColor = e.target.value))} /></Field>
       {stats && r && (
         <table className="tbl" style={{ marginTop: 8 }}>

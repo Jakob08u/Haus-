@@ -47,7 +47,7 @@ export function derive(level: Level): LevelDerived {
     ceiling = rk.ceiling;
   } else {
     rooms = detectRooms(level);
-    ceiling = new CeilingModel(level);
+    ceiling = new CeilingModel(level, rooms);
     roomCache.set(level.walls, { rooms: level.rooms, stairs: level.stairs, key: roomKey, result: rooms, ceiling });
   }
   const d: LevelDerived = { footprintsAll, footprints, outlineByType, rooms, ceiling, wallsPlanned: plannedWalls(level) };

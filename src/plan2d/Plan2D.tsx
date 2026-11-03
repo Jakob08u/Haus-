@@ -15,6 +15,7 @@ import { verticalZones } from '../checks/zones';
 import { slopePitch } from '../geometry/ceiling';
 import { locateOnWall } from '../checks/zones';
 import { roomStats } from '../calc/roomStats';
+import { NumInput } from '../ui/inputs';
 
 interface View { s: number; tx: number; ty: number }
 
@@ -317,6 +318,7 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
         if (!nw) return;
         const L = dist(nw.w.a, nw.w.b);
         const o = newOpening(tool, nw.w.id, 0);
+        if (tool === 'window') Object.assign(o, toolOpts.windowSize);
         o.offset = Math.round(Math.max(o.width / 2, Math.min(L - o.width / 2, nw.s)) / 5) * 5;
         o.swing = dot(sub(p, nw.w.a), perp(norm(sub(nw.w.b, nw.w.a)))) >= 0 ? 1 : -1;
         st().updateLevel((l) => {
@@ -334,7 +336,8 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
         const id = uid('rw');
         const knee = nw.w.slope!.knee;
         st().updateLevel((l) => {
-          l.roofWindows.push({ id, wallId: nw.w.id, offset: Math.round(nw.s), width: 780, length: 1400, bottomHeight: Math.max(knee + 50, 1100) });
+          const rs = toolOpts.roofWindowSize;
+          l.roofWindows.push({ id, wallId: nw.w.id, offset: Math.round(nw.s), width: rs.width, length: rs.length, bottomHeight: Math.max(knee + 50, rs.bottomHeight) });
         });
         st().select({ kind: 'roofWindow', id });
         return;
@@ -825,7 +828,7 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
                     if (ang > 90 || ang < -90) ang += 180;
                     return (
                       <text key={'kn' + w.id} x={m.x} y={m.y} fontSize={fontPx(11)} fill="#1d4ed8" textAnchor="middle" dominantBaseline="middle" transform={`rotate(${ang} ${m.x} ${m.y})`} style={{ pointerEvents: 'none' }}>
-                        Kniestock {fmtCm(w.slope!.knee)} cm · {Math.round(slopePitch(w.slope!, level.ceilingHeight))}°
+                        Kniestock {fmtCm(w.slope!.knee)} cm · {Math.round(D.ceiling.planes.find((p) => p.wallId === w.id)?.pitchDeg ?? slopePitch(w.slope!, level.ceilingHeight))}°
                       </text>
                     );
                   })}
@@ -1089,6 +1092,8 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
         </g>
       </svg>
       {!printMode && tool === 'wall' && <WallToolBar />}
+      {!printMode && tool === 'window' && <WindowToolBar />}
+      {!printMode && tool === 'roofWindow' && <RoofWindowToolBar />}
       {!printMode && (
         <div className="hud">
           {cursor ? `x ${fmtCm(cursor.x, 0)} · y ${fmtCm(cursor.y, 0)} cm` : ''} {cursorText ? ` · ${cursorText}` : ''} · Zoom {(view.s * 100).toFixed(1)} px/m
@@ -1110,6 +1115,70 @@ const WALL_PRESETS: { label: string; type: Wall['type']; t: number }[] = [
   { label: 'Mauerwerk 11,5', type: 'bestand', t: 115 },
   { label: 'Mauerwerk 24', type: 'bestand', t: 240 },
 ];
+
+export const WINDOW_PRESETS: { label: string; width: number; height: number; sill: number }[] = [
+  { label: '60 × 60', width: 600, height: 600, sill: 1200 },
+  { label: '80 × 80', width: 800, height: 800, sill: 1200 },
+  { label: '80 × 120', width: 800, height: 1200, sill: 900 },
+  { label: '100 × 120', width: 1000, height: 1200, sill: 900 },
+  { label: '100 × 135', width: 1000, height: 1350, sill: 800 },
+  { label: '120 × 135', width: 1200, height: 1350, sill: 800 },
+  { label: '140 × 135 (2-flg.)', width: 1400, height: 1350, sill: 800 },
+  { label: '200 × 135 (3-flg.)', width: 2000, height: 1350, sill: 800 },
+  { label: 'Fenstertür 90 × 210', width: 900, height: 2100, sill: 0 },
+  { label: 'Fenstertür 120 × 220', width: 1200, height: 2200, sill: 0 },
+];
+export const ROOF_WINDOW_PRESETS: { label: string; width: number; length: number }[] = [
+  { label: '55 × 78', width: 550, length: 780 },
+  { label: '55 × 98', width: 550, length: 980 },
+  { label: '66 × 98', width: 660, length: 980 },
+  { label: '66 × 118', width: 660, length: 1180 },
+  { label: '78 × 98', width: 780, length: 980 },
+  { label: '78 × 118', width: 780, length: 1180 },
+  { label: '78 × 140', width: 780, length: 1400 },
+  { label: '94 × 118', width: 940, length: 1180 },
+  { label: '94 × 140', width: 940, length: 1400 },
+  { label: '114 × 118', width: 1140, length: 1180 },
+  { label: '114 × 140', width: 1140, length: 1400 },
+];
+
+const barLabel = { background: 'rgba(255,255,255,0.94)', padding: '3px 8px', borderRadius: 6, border: '1px solid var(--line)' } as const;
+
+/** Werkzeugleiste Fenster: Größe und Brüstung für das nächste Fenster */
+function WindowToolBar() {
+  const ws = useStore((s) => s.toolOpts.windowSize);
+  const set = (o: Partial<typeof ws>) => useStore.getState().setToolOpts({ windowSize: { ...ws, ...o } });
+  const cur = WINDOW_PRESETS.find((p) => p.width === ws.width && p.height === ws.height);
+  return (
+    <div className="overlay-ctrl" style={{ alignItems: 'center' }}>
+      <span style={barLabel}>Fenster:</span>
+      <select value={cur?.label ?? ''} onChange={(e) => { const p = WINDOW_PRESETS.find((x) => x.label === e.target.value); if (p) set({ width: p.width, height: p.height, sill: p.sill }); }}>
+        {!cur && <option value="">eigene Größe</option>}
+        {WINDOW_PRESETS.map((p) => <option key={p.label} value={p.label}>{p.label} cm</option>)}
+      </select>
+      <span style={barLabel}>B <NumInput value={ws.width} width={46} onChange={(v) => set({ width: v })} /> H <NumInput value={ws.height} width={46} onChange={(v) => set({ height: v })} /> Brüstung <NumInput value={ws.sill} width={46} onChange={(v) => set({ sill: v })} /></span>
+      <span style={barLabel}>Klick auf eine Wand setzt das Fenster</span>
+    </div>
+  );
+}
+
+/** Werkzeugleiste Dachfenster: Größe und Unterkante */
+function RoofWindowToolBar() {
+  const rs = useStore((s) => s.toolOpts.roofWindowSize);
+  const set = (o: Partial<typeof rs>) => useStore.getState().setToolOpts({ roofWindowSize: { ...rs, ...o } });
+  const cur = ROOF_WINDOW_PRESETS.find((p) => p.width === rs.width && p.length === rs.length);
+  return (
+    <div className="overlay-ctrl" style={{ alignItems: 'center' }}>
+      <span style={barLabel}>Dachfenster:</span>
+      <select value={cur?.label ?? ''} onChange={(e) => { const p = ROOF_WINDOW_PRESETS.find((x) => x.label === e.target.value); if (p) set({ width: p.width, length: p.length }); }}>
+        {!cur && <option value="">eigene Größe</option>}
+        {ROOF_WINDOW_PRESETS.map((p) => <option key={p.label} value={p.label}>{p.label} cm</option>)}
+      </select>
+      <span style={barLabel}>B <NumInput value={rs.width} width={46} onChange={(v) => set({ width: v })} /> Länge <NumInput value={rs.length} width={46} onChange={(v) => set({ length: v })} /> Unterkante <NumInput value={rs.bottomHeight} width={46} onChange={(v) => set({ bottomHeight: v })} /></span>
+      <span style={barLabel}>Klick nahe einer Wand mit Schräge</span>
+    </div>
+  );
+}
 
 /** Werkzeugleiste beim Wandzeichnen: Typ und Stärke der neuen Wand */
 function WallToolBar() {

@@ -213,11 +213,47 @@ export function checkLevel(level: Level, project: Project): Warning[] {
       push({ severity: 'warn', category: 'bewegung', message: `„${f.name}“: keine Bettseite hat ${Math.round(s.clearance.bettSeite / 10)} cm Bewegungsfläche`, refs: [ref], at: { x: f.x, y: f.y } });
   }
 
+  // Fenster: passt das Fenster unter Kniestock/Decke? Dachfenster innerhalb der Schräge?
+  for (const o of level.openings) {
+    if (o.type === 'passage') continue;
+    const w = level.walls.find((x) => x.id === o.wallId);
+    if (!w) continue;
+    const dd = { x: (w.b.x - w.a.x) / (Math.hypot(w.b.x - w.a.x, w.b.y - w.a.y) || 1), y: (w.b.y - w.a.y) / (Math.hypot(w.b.x - w.a.x, w.b.y - w.a.y) || 1) };
+    const nn = { x: -dd.y, y: dd.x };
+    let wallTop = Infinity;
+    for (const side of [1, -1]) {
+      for (const s of [o.offset - o.width / 2 + 20, o.offset, o.offset + o.width / 2 - 20]) {
+        const p = { x: w.a.x + dd.x * s + nn.x * side * (w.thickness / 2 + 30), y: w.a.y + dd.y * s + nn.y * side * (w.thickness / 2 + 30) };
+        if (D.ceiling.roomHeightAt(p) == null) continue;
+        wallTop = Math.min(wallTop, D.ceiling.heightAt(p));
+      }
+    }
+    if (isFinite(wallTop) && o.sill + o.height > wallTop + 1)
+      push({ severity: 'warn', category: 'fenster', message: `${o.type === 'window' ? 'Fenster' : 'Tür'} ${Math.round(o.width / 10)} × ${Math.round(o.height / 10)} cm ist höher als die Wand an dieser Stelle (Oberkante ${Math.round((o.sill + o.height) / 10)} cm, Wand nur ${Math.round(wallTop / 10)} cm) – kleiner machen oder als Dachfenster setzen`, refs: [{ kind: 'opening', id: o.id }], at: { x: w.a.x + dd.x * o.offset, y: w.a.y + dd.y * o.offset } });
+  }
+  for (const rw of level.roofWindows) {
+    const pl = D.ceiling.planes.find((p) => p.wallId === rw.wallId);
+    const w = level.walls.find((x) => x.id === rw.wallId);
+    if (!pl || !w) {
+      push({ severity: 'error', category: 'fenster', message: 'Dachfenster sitzt an einer Wand ohne Dachschräge', refs: [{ kind: 'roofWindow', id: rw.id }] });
+      continue;
+    }
+    const top = Math.max(rw.bottomHeight, pl.knee) + rw.length * Math.sin((pl.pitchDeg * Math.PI) / 180);
+    const dd = { x: (w.b.x - w.a.x) / (Math.hypot(w.b.x - w.a.x, w.b.y - w.a.y) || 1), y: (w.b.y - w.a.y) / (Math.hypot(w.b.x - w.a.x, w.b.y - w.a.y) || 1) };
+    const probe = { x: pl.innerA.x + dd.x * rw.offset - dd.y * pl.side * 2000, y: pl.innerA.y + dd.y * rw.offset + dd.x * pl.side * 2000 };
+    const flat = D.ceiling.flatAt(probe);
+    if (rw.bottomHeight < pl.knee - 1)
+      push({ severity: 'warn', category: 'fenster', message: `Dachfenster: Unterkante (${Math.round(rw.bottomHeight / 10)} cm) liegt unter dem Schrägenansatz (${Math.round(pl.knee / 10)} cm)`, refs: [{ kind: 'roofWindow', id: rw.id }] });
+    if (top > flat + 1)
+      push({ severity: 'warn', category: 'fenster', message: `Dachfenster ${Math.round(rw.width / 10)} × ${Math.round(rw.length / 10)} cm ragt über die Schräge hinaus (Oberkante ${Math.round(top / 10)} cm, Decke ${Math.round(flat / 10)} cm) – kürzeres Fenster oder tiefer setzen`, refs: [{ kind: 'roofWindow', id: rw.id }] });
+  }
+
   // Elektro-Symbole
   for (const e of level.electrical) {
     const iss = checkSymbolZone(level, walls, D.ceiling, D.rooms, e, D.footprints);
     if (iss) push({ severity: 'warn', category: 'elektro', message: `${ELEC_INFO[e.kind].label}${e.label ? ` „${e.label}“` : ''}: ${iss.message}`, refs: [{ kind: 'elec', id: e.id }], at: iss.at });
-    const maxH = D.ceiling.heightAt(e);
+    const facing = rotate({ x: 0, y: 1 }, e.rotation ?? 0);
+    const maxH = D.ceiling.heightAt(e.wallId ? add(e, mul(facing, 100)) : e);
     if (e.height > maxH + 1) push({ severity: 'error', category: 'elektro', message: `${ELEC_INFO[e.kind].label} liegt über der Decke/Schräge (${Math.round(e.height / 10)} cm > ${Math.round(maxH / 10)} cm)`, refs: [{ kind: 'elec', id: e.id }], at: e });
   }
   // Leitungen

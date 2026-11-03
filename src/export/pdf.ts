@@ -347,14 +347,18 @@ function planPage(D: Doc, levelId: string, mode: 'grundriss' | 'elektro') {
       d.text('Dachschrägen:', lx, ly);
       ly += 4;
       for (const w of kneeWalls) {
-        const t = d.splitTextToSize(`${w.label ?? 'Wand'}: Kniestock ${(w.slope!.knee / 10).toFixed(0)} cm, ${slopePitch(w.slope!, l.ceilingHeight).toFixed(0)}°`, legendW);
+        const t = d.splitTextToSize(`${w.label ?? 'Wand'}: Kniestock ${(w.slope!.knee / 10).toFixed(0)} cm, ${(derive(l).ceiling.planes.find((p) => p.wallId === w.id)?.pitchDeg ?? slopePitch(w.slope!, l.ceilingHeight)).toFixed(0)}°`, legendW);
         for (const tl of t) {
           d.text(tl, lx, ly);
           ly += 3.5;
         }
       }
-      d.text(`Decke flach bei ${(l.ceilingHeight / 10).toFixed(0)} cm`, lx, ly);
-      ly += 4;
+      d.text('Flache Deckenhöhe:', lx, ly);
+      ly += 3.5;
+      for (const r of derive(l).rooms) {
+        d.text(`${r.name}: ${((r.meta?.ceilingHeight ?? l.ceilingHeight) / 10).toFixed(0)} cm`, lx + 2, ly);
+        ly += 3.5;
+      }
     }
   } else {
     for (const k of Object.keys(LINE_INFO) as (keyof typeof LINE_INFO)[]) if (l.lines.some((x) => x.kind === k)) ln(LINE_INFO[k].color, LINE_INFO[k].label);

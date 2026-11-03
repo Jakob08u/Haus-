@@ -37,7 +37,10 @@ function faceGeometry(w: Wall, side: 1 | -1, start: Vec2, end: Vec2, D: LevelDer
   const n = perp(d);
   const s0 = dot(sub(start, w.a), d);
   const s1 = dot(sub(end, w.a), d);
-  const prof = D.ceiling.profile(start, end).map((p) => ({ s: s0 + (p.s * (s1 - s0)) / Math.max(1e-9, dist(start, end)), h: w.height ? Math.min(w.height, p.h) : p.h }));
+  // Deckenhöhe des Raums auf dieser Wandseite
+  const probe = add(mul(add(start, end), 0.5), mul(n, side * 150));
+  const Hroom = D.ceiling.flatAt(probe);
+  const prof = D.ceiling.profile(start, end, Hroom).map((p) => ({ s: s0 + (p.s * (s1 - s0)) / Math.max(1e-9, dist(start, end)), h: w.height ? Math.min(w.height, p.h) : p.h }));
   const lo = Math.min(s0, s1), hi = Math.max(s0, s1);
   const shape = new THREE.Shape();
   shape.moveTo(lo, 0);

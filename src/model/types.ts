@@ -123,6 +123,8 @@ export interface RoomMeta {
   /** Punkt innerhalb des Raums, über den der automatisch erkannte Raum zugeordnet wird */
   seed: Vec2;
   floor?: FloorFinish;
+  /** lichte Höhe der flachen Decke in diesem Raum (sonst Deckenhöhe der Ebene) */
+  ceilingHeight?: number;
   ceilingColor?: string;
   usage?: string;
 }
