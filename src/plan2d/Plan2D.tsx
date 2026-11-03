@@ -5,7 +5,7 @@ import type { Furniture, Level, LinePoint, Project, Vec2, Wall } from '../model/
 import { add, bbox, dist, dot, fmtCm, fmtM2, mul, norm, perp, pointInPolygon, polygonArea, projectT, rotate, sub, uid, closestOnSegment, polygonCentroid } from '../geometry/vec';
 import { snapPoint, type SnapResult } from './snap';
 import { newFurniture, newOpening, ELEC_INFO, WALL_TYPE_INFO, LINE_INFO, CATEGORY_INFO } from '../model/defaults';
-import { doorSwing, openingGeom, roofWindowFootprint, stairSteps, furnitureDoorSwing, furnitureFootprint } from '../geometry/openings';
+import { doorSwing, openingGeom, roofWindowFootprint, stairSteps, furnitureDoorSwing, furnitureFootprint, furnitureLocalOutline, hasCorners } from '../geometry/openings';
 import { stairPolygon } from '../geometry/rooms';
 import { clipHalfPlane, union, type Multi } from '../geometry/polygon';
 import { ElecGlyph, FurnitureGlyph } from './symbols';
@@ -820,15 +820,21 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
               {layers.schraegen &&
                 level.walls
                   .filter((w) => w.slope)
-                  // geteilte Wand: Beschriftung nur am längsten Stück mit gleicher Schräge
+                  // geteilte Wand (gleiche Innenflucht): Beschriftung nur am längsten Stück mit gleicher Schräge
                   .filter((w, _i, all) => {
                     const L = dist(w.a, w.b);
                     const d = norm(sub(w.b, w.a));
+                    const n = mul(perp(d), w.slope!.side);
+                    const face = add(w.a, mul(n, w.thickness / 2));
                     return !all.some((o) => {
                       if (o === w || o.slope!.knee !== w.slope!.knee || dist(o.a, o.b) <= L) return false;
                       const od = norm(sub(o.b, o.a));
-                      const touches = [o.a, o.b].some((p) => dist(p, w.a) < 3 || dist(p, w.b) < 3);
-                      return touches && Math.abs(d.x * od.y - d.y * od.x) < 0.02;
+                      if (Math.abs(d.x * od.y - d.y * od.x) > 0.02) return false;
+                      const on = mul(perp(od), o.slope!.side);
+                      if (dot(on, n) < 0.99) return false;
+                      const oface = add(o.a, mul(on, o.thickness / 2));
+                      if (Math.abs(dot(sub(oface, face), n)) > 5) return false;
+                      return [o.a, o.b].some((p) => [w.a, w.b].some((q) => Math.abs(dot(sub(p, q), d)) < 400));
                     });
                   })
                   .map((w) => {
@@ -945,8 +951,17 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
                 <g key={f.id}>
                   {swing && <path d={ringPath(swing)} fill="none" stroke="#9ca3af" strokeWidth={px(0.7)} strokeDasharray={`${px(2)} ${px(3)}`} style={{ pointerEvents: 'none' }} />}
                   <g transform={`translate(${f.x} ${f.y}) rotate(${f.rotation})`} data-kind="furniture" data-id={f.id} style={{ cursor: 'move' }}>
-                    <rect x={-f.width / 2} y={-f.depth / 2} width={f.width} height={f.depth} fill={f.category === 'teppich' ? f.color + '55' : '#ffffff'} fillOpacity={0.92} stroke={stroke} strokeWidth={px(sel || warn ? 2 : 1.2)} />
-                    <rect x={-f.width / 2} y={-f.depth / 2} width={f.width} height={Math.min(f.depth, px(4))} fill={f.color} opacity={0.9} />
+                    {hasCorners(f) ? (
+                      <path d={ringPath(furnitureLocalOutline(f))} fill={f.category === 'teppich' ? f.color + '55' : '#ffffff'} fillOpacity={0.92} stroke={stroke} strokeWidth={px(sel || warn ? 2 : 1.2)} />
+                    ) : (
+                      <rect x={-f.width / 2} y={-f.depth / 2} width={f.width} height={f.depth} fill={f.category === 'teppich' ? f.color + '55' : '#ffffff'} fillOpacity={0.92} stroke={stroke} strokeWidth={px(sel || warn ? 2 : 1.2)} />
+                    )}
+                    {(() => {
+                      // Farbstreifen an der Rückseite (ohne abgeschrägte Ecken)
+                      const l = f.corners?.bl?.y ? f.corners.bl.x : 0, r = f.corners?.br?.y ? f.corners.br.x : 0;
+                      const w = Math.max(0, f.width - l - r);
+                      return <rect x={-f.width / 2 + l} y={-f.depth / 2} width={w} height={Math.min(f.depth, px(4))} fill={f.color} opacity={0.9} />;
+                    })()}
                     <FurnitureGlyph f={f} stroke={stroke} />
                     {s > 0.025 && (
                       <text x={0} y={0} fontSize={fontPx(10)} textAnchor="middle" dominantBaseline="middle" fill="#111827" transform={`rotate(${-f.rotation})`} style={{ pointerEvents: 'none' }}>

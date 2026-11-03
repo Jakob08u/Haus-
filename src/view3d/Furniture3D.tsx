@@ -2,6 +2,7 @@ import { Component, Suspense, useMemo, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { useGLTF } from '@react-three/drei';
 import type { Furniture } from '../model/types';
+import { furnitureLocalOutline, hasCorners } from '../geometry/openings';
 
 const S = 0.001;
 
@@ -33,8 +34,30 @@ function Cyl({ x = 0, y0 = 0, z = 0, r, r2, h, color, sx = 1, sz = 1, emissive, 
   );
 }
 
+/** Prisma aus dem Grundriss-Umriss (für Möbel mit abgeschrägten Ecken, z. B. Podest) */
+function Prism({ f }: { f: Furniture }) {
+  const geo = useMemo(() => {
+    const pts = furnitureLocalOutline(f);
+    // Form in (x, −y), danach um −90° um X kippen: Form-y → −z, Extrusion → +y
+    const shape = new THREE.Shape(pts.map((p) => new THREE.Vector2(p.x * S, -p.y * S)));
+    const g = new THREE.ExtrudeGeometry(shape, { depth: Math.max(1, f.height) * S, bevelEnabled: false });
+    g.rotateX(-Math.PI / 2);
+    return g;
+  }, [f.width, f.depth, f.height, f.corners]);
+  return (
+    <mesh geometry={geo} castShadow receiveShadow>
+      <meshStandardMaterial color={f.color} roughness={0.75} />
+    </mesh>
+  );
+}
+
 /** Parametrisches Grobmodell aus Grundkörpern in den echten Maßen */
 export function ParametricFurniture({ f, lampsOn }: { f: Furniture; lampsOn?: boolean }) {
+  if (hasCorners(f)) return <Prism f={f} />;
+  return <ParametricBody f={f} lampsOn={lampsOn} />;
+}
+
+function ParametricBody({ f, lampsOn }: { f: Furniture; lampsOn?: boolean }) {
   const W = f.width, D = f.depth, H = f.height, c = f.color;
   const dark = shade(c, 0.7), light = shade(c, 1.15);
   const back = -D / 2, front = D / 2;

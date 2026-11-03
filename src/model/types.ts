@@ -142,6 +142,8 @@ export interface ConnectionPoint {
   z: number;
 }
 
+export type FurnitureCorner = 'bl' | 'br' | 'fr' | 'fl';
+
 export interface Furniture {
   id: Id;
   name: string;
@@ -167,6 +169,11 @@ export interface Furniture {
   doors?: number;
   doorType?: 'hinged' | 'sliding' | 'none';
   connections?: ConnectionPoint[];
+  /**
+   * abgeschrägte Ecken (z. B. Podest): Schenkel entlang Breite (x) und Tiefe (y) in mm.
+   * Lokal wie im Grundriss bei Drehung 0: hinten = oben (−y), vorne = unten (+y), links = −x.
+   */
+  corners?: Partial<Record<FurnitureCorner, { x: number; y: number }>>;
   /** zusätzliche Bewegungsfläche überschreiben */
   clearanceFront?: number;
   clearanceSide?: number;

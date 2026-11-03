@@ -2,14 +2,29 @@ import { useStore, useLevel } from '../../store/store';
 import { derive } from '../../store/derived';
 import { NumInput, Field, TextInput, Select } from '../inputs';
 import { CATEGORY_INFO, defaultConnections } from '../../model/defaults';
-import type { Furniture, FurnitureCategory, Level } from '../../model/types';
+import type { Furniture, FurnitureCategory, FurnitureCorner, Level } from '../../model/types';
 import { snapToNearestWall } from '../../plan2d/geom2d';
 import { deleteSelection, duplicateSelection, rotateSelection } from '../actions';
 import { checkLevelCached } from '../../checks/checks';
 import { fmtCm } from '../../geometry/vec';
-import { furnitureFootprint } from '../../geometry/openings';
+import { furnitureFootprint, hasCorners } from '../../geometry/openings';
 
 const upd = (fn: (l: Level) => void) => useStore.getState().updateLevel(fn);
+
+const CORNERS: [FurnitureCorner, string][] = [
+  ['bl', 'hinten links'],
+  ['br', 'hinten rechts'],
+  ['fl', 'vorne links'],
+  ['fr', 'vorne rechts'],
+];
+function setCorner(f: Furniture, k: FurnitureCorner, axis: 'x' | 'y', v: number) {
+  const c = { x: 0, y: 0, ...f.corners?.[k] };
+  c[axis] = Math.max(0, v || 0);
+  const corners = { ...f.corners };
+  if (c.x > 0 || c.y > 0) corners[k] = c;
+  else delete corners[k];
+  f.corners = Object.keys(corners).length ? corners : undefined;
+}
 
 export function FurnitureEditor({ id }: { id: string }) {
   const level = useLevel();
@@ -79,6 +94,17 @@ export function FurnitureEditor({ id }: { id: string }) {
           </Field>
         </>
       )}
+      <details open={hasCorners(f)}>
+        <summary>Ecken abschrägen</summary>
+        <div className="hint">Je Ecke: Schenkel entlang der Breite und der Tiefe (z. B. 22 × 22 cm ≈ 31 cm Schräge). Ecken wie im Grundriss bei Drehung 0°.</div>
+        {CORNERS.map(([k, label]) => (
+          <Field key={k} label={label}>
+            <NumInput value={f.corners?.[k]?.x} min={0} width={60} title="entlang der Breite" onChange={(v) => set((x) => setCorner(x, k, 'x', v))} />
+            <NumInput value={f.corners?.[k]?.y} min={0} width={60} title="entlang der Tiefe" onChange={(v) => set((x) => setCorner(x, k, 'y', v))} />
+          </Field>
+        ))}
+        {hasCorners(f) && <div className="hint">Schräge: {CORNERS.filter(([k]) => f.corners?.[k]?.x && f.corners?.[k]?.y).map(([k, label]) => `${label} ${fmtCm(Math.hypot(f.corners![k]!.x, f.corners![k]!.y))} cm`).join(', ')}</div>}
+      </details>
       <Field label="Bewegungsfläche vorn"><NumInput value={f.clearanceFront} onChange={(v) => set((x) => void (x.clearanceFront = v > 0 ? v : undefined))} /><span className="hint">leer = Standard</span></Field>
       <h4>Shop</h4>
       <Field label="Preis"><NumInput value={f.price} factor={1} digits={2} unit="€" onChange={(v) => set((x) => void (x.price = v))} /></Field>

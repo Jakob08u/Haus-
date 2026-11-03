@@ -57,13 +57,15 @@ const ogWalls = mkWalls(
     ['og_w_buero_rechts', 11100, 5250, 7410, 5250, 300, 'bestand', 'Außenwand Büro rechts'],
     // Bad laut Skizze „Badezimmer 2“ 3,32 m breit → Außenwand springt hier ca. 1 m vor
     ['og_w_bad_aussen', 7410, 6280, 3880, 6280, 300, 'bestand', 'Außenwand Bad'],
-    ['og_w_nische_unten', 3880, 6280, 3880, 5250, 300, 'bestand', 'Außenwand WC-Nische'],
-    ['og_w_schlaf_rechts', 4540, 5250, -150, 5250, 300, 'bestand', 'Außenwand Schlaf rechts'],
+    ['og_w_nische_unten', 3880, 6280, 3880, 5185, 300, 'bestand', 'Außenwand WC-Nische'],
+    ['og_w_schlaf_rechts', 3880, 5250, -150, 5250, 300, 'bestand', 'Außenwand Schlaf rechts'],
     ['og_w_schlaf_unten', -150, 5250, -150, -3700, 300, 'bestand', 'Außenwand Schlaf unten'],
     ['og_w_schlaf_flur', 3060, -150, 3060, 2690, 200, 'bestand', 'Wand Schlaf/Flur'],
     ['og_w_treppe_bad', 3060, 2690, 7410, 2690, 240, 'bestand', 'Wand Treppe/Bad'],
     ['og_w_flur_buero', 7410, -150, 7410, 6280, 300, 'bestand', 'Wand Flur/Büro'],
-    ['og_w_schlaf_bad', 4540, 2690, 4540, 5250, 240, 'bestand', 'Wand Schlaf/Bad'],
+    ['og_w_schlaf_bad', 4540, 2690, 4540, 5185, 240, 'bestand', 'Wand Schlaf/Bad'],
+    // WC-Nische so breit wie das Podest (86 cm) → Wand zum Schlafzimmer dort nur 17 cm, innen bündig
+    ['og_w_schlaf_nische', 4540, 5185, 3880, 5185, 170, 'bestand', 'Wand Schlaf/WC-Nische'],
   ],
   toUser,
 );
@@ -88,6 +90,7 @@ function slope(key: string, knee: number, slopeDepth: number, towards: Vec2) {
   w.slope = { side: sideOf(w, towards), knee, mode: 'depth', slopeDepth, pitchDeg: 45 };
 }
 slope('og_w_schlaf_rechts', 1150, 1870, ogC.schlaf);
+slope('og_w_schlaf_nische', 1150, 1870, ogC.schlaf);
 slope('og_w_nische_aussen', 1030, 1970, ogC.nische);
 slope('og_w_buero_oben', 1050, 1670, ogC.buero);
 
@@ -159,7 +162,7 @@ const og: Level = {
 
 // Beispielmöbel (frei löschbar) – Koordinaten im gedrehten System vor der Geschoss-Ausrichtung:
 // Büro X 2570–8950 / Y 300–3690 · Flur X 3850–6420 / Y 3990–8090 · Bad X 6660–9980 / Y 3990–6590,
-// WC-Nische X 9250–9980 / Y 6590–7220 · Schlaf X 3850–8950 / Y 8290–11250, Nische X 300–3850 / Y 9040–11250,
+// WC-Nische X 9120–9980 / Y 6590–7220 · Schlaf X 3850–8950 / Y 8290–11250, Nische X 300–3850 / Y 9040–11250,
 // Ausbuchtung X 6660–8950 / Y 6830–8290
 {
   const F = og.furniture;
@@ -173,9 +176,9 @@ const og: Level = {
   // Bad laut Skizze „Badezimmer 2“: links Tür 94 + 77 + Dusche 89 = 2,60 m, unten Dusche 89 + 157 + Podest 86 = 3,32 m
   F.push(newFurniture('dusche', 6660 + 445, 6590 - 445, { name: 'Dusche 89 × 89', width: 890, depth: 890, rotation: 270 }));
   F.push(newFurniture('sonstiges', 9980 - 775, 3990 + 425, { name: 'Gemauerter Kasten 155 × 85 (Höhe 68 cm)', width: 1550, depth: 850, height: 680, color: '#e4e1db', rotation: 0, connections: [] }));
-  F.push(newFurniture('sonstiges', 9980 - 430, 6590 - 355, { name: 'Podest WC (17 cm)', width: 860, depth: 710, height: 170, color: '#d9d4cc', rotation: 0, connections: [] }));
-  F.push(newFurniture('sonstiges', 9980 - 365, 6590 + 315, { name: 'Podest WC-Nische (17 cm)', width: 730, depth: 630, height: 170, color: '#d9d4cc', rotation: 0, connections: [] }));
-  F.push(newFurniture('wc', 9980 - 365, 7220 - 280, { name: 'WC auf Podest (Nische)', elevation: 170, rotation: 180 }));
+  // Podest wie gezeichnet: oben 64 cm, Ecke 31 cm schräg (22 × 22 cm), links 49 cm, dann durch die Nische (63 cm)
+  F.push(newFurniture('sonstiges', 9980 - 430, 7220 - 670, { name: 'Podest WC (17 cm)', width: 860, depth: 1340, height: 170, color: '#d9d4cc', rotation: 0, connections: [], corners: { bl: { x: 220, y: 220 } } }));
+  F.push(newFurniture('wc', 9980 - 430, 7220 - 280, { name: 'WC auf Podest', elevation: 170, rotation: 180 }));
   // 45 cm unter dem Kasten, 1 m lang → reicht bis über das Podest, daher höher montiert
   F.push(newFurniture('heizkoerper', 9980 - 50, 3990 + 850 + 450 + 500, { name: 'Heizkörper 1 m', width: 1000, depth: 100, height: 600, elevation: 250, rotation: 90 }));
 }
@@ -185,7 +188,7 @@ given('Deckenhöhen OG laut Angabe: Flur 2,48 m, Büro 2,79 m, Schlafzimmer 2,72
 assume('Werte 1,87 / 1,97 / 1,67 m als waagrechte Tiefe der Schräge bis zur flachen Decke gedeutet (als Länge entlang der Schräge passt es im Büro bei 2,79 m Decke nicht). Daraus Neigung ca. 40° (Schlafzimmer) und 46° (Büro).', OG);
 given('Bad OG laut Skizze „Badezimmer 2“: Deckenhöhe 2,63 m, Tür 94 cm, Dusche 89 × 89 cm, gemauerter Kasten 155 × 85 cm (Höhe 68 cm), WC auf 17 cm Podest in 63 cm tiefer Nische Richtung Schlafzimmer, Heizkörper 1 m an der Außenwand. Rote Markierung an der Außenwand ignoriert.', OG, 'room:r_bad_og');
 assume('Bad 3,32 × 2,60 m aus der Skizze (89 + 157 + 86 cm bzw. 94 + 77 + 89 cm). Laut Gesamtgrundriss ist dort nur 2,29 m Platz (Schlafzimmer 5,10 m = Flur 2,57 m + Bad) – das Bad wurde deshalb nach außen verlängert, die Außenwand springt am Bad ca. 1 m vor. Bitte prüfen.', OG, 'room:r_bad_og');
-assume('WC-Nische 73 × 63 cm: seitlich durch die Außenwand des Schlafzimmers begrenzt (Skizze: 64 + 31 cm schräg). Wand Schlaf/Bad 24 cm, damit die Bad-Tiefe 2,60 m ergibt.', OG, 'room:r_bad_og');
+assume('WC-Nische 86 × 63 cm, so breit wie das Podest; die Wand zum Schlafzimmer ist dort nur 17 cm stark (innen bündig). Wand Schlaf/Bad 24 cm, damit die Bad-Tiefe 2,60 m ergibt.', OG, 'room:r_bad_og');
 assume('Rechte Bad-Seite laut Skizze 85 + 45 + 100 + 71 = 3,01 m, links nur 2,60 m: Heizkörper deshalb über dem Podest montiert (Unterkante 25 cm).', OG, 'room:r_bad_og');
 assume('Beide Skizzen gleich ausgerichtet angenommen und für die Darstellung um 90° gedreht (Büro oben, Bad rechts, Schlafzimmer unten).', OG);
 assume('Lage OG über EG: linke Außenwand bündig, Treppenloch über dem Flur EG (OG dafür um 43 cm versetzt) – bitte prüfen; korrigierbar unter Eigenschaften → „Ebene verschieben/drehen“.', OG);
@@ -304,7 +307,7 @@ assume('Bad EG 1,82 × 3,50 m abgeleitet; Wand Gäste/Bad 11,5 cm.', EG, 'room:r
 seedDemoElectrical(og, toUser);
 
 // Wände, die an mehrere Räume grenzen, an den Anschlüssen teilen (je Raum eigene Oberfläche)
-for (const id of ['og_w_flur_buero', 'og_w_treppe_bad', 'og_w_schlaf_rechts']) splitWallAtJunctions(og, id);
+for (const id of ['og_w_flur_buero', 'og_w_treppe_bad']) splitWallAtJunctions(og, id);
 for (const w of og.walls) {
   if (w.label === 'Wand Flur/Büro' && w.id !== 'og_w_flur_buero') w.label = 'Wand Bad/Büro';
   if (w.label === 'Wand Treppe/Bad' && w.id === 'og_w_treppe_bad') w.label = 'Wand Treppe/Schlaf';

@@ -1,8 +1,8 @@
 {
  "version": 1,
  "name": "Haus Umbau",
- "createdAt": "2026-11-03T15:12:29.006Z",
- "updatedAt": "2026-11-03T15:12:29.006Z",
+ "createdAt": "2026-11-03T17:32:48.659Z",
+ "updatedAt": "2026-11-03T17:32:48.659Z",
  "levels": [
   {
    "id": "eg",
@@ -665,7 +665,7 @@
       "y": 7920
      },
      "b": {
-      "x": 12320,
+      "x": 12255,
       "y": 7920
      },
      "thickness": 300,
@@ -681,34 +681,6 @@
     },
     {
      "id": "og_w_schlaf_rechts",
-     "a": {
-      "x": 12320,
-      "y": 7260
-     },
-     "b": {
-      "x": 12320,
-      "y": 7920
-     },
-     "thickness": 300,
-     "type": "bestand",
-     "label": "Außenwand Schlaf rechts",
-     "slope": {
-      "side": 1,
-      "knee": 1150,
-      "mode": "depth",
-      "slopeDepth": 1870,
-      "pitchDeg": 45
-     },
-     "finishes": {
-      "right": {
-       "kind": "tile",
-       "materialId": "mat_fliese_weiss",
-       "maxHeight": 1200
-      }
-     }
-    },
-    {
-     "id": "og_w_schlaf_rechts_t1",
      "a": {
       "x": 12320,
       "y": 7920
@@ -873,12 +845,40 @@
       "y": 7260
      },
      "b": {
-      "x": 12320,
+      "x": 12255,
       "y": 7260
      },
      "thickness": 240,
      "type": "bestand",
      "label": "Wand Schlaf/Bad",
+     "finishes": {
+      "right": {
+       "kind": "tile",
+       "materialId": "mat_fliese_weiss",
+       "maxHeight": 1200
+      }
+     }
+    },
+    {
+     "id": "og_w_schlaf_nische",
+     "a": {
+      "x": 12255,
+      "y": 7260
+     },
+     "b": {
+      "x": 12255,
+      "y": 7920
+     },
+     "thickness": 170,
+     "type": "bestand",
+     "label": "Wand Schlaf/WC-Nische",
+     "slope": {
+      "side": 1,
+      "knee": 1150,
+      "mode": "depth",
+      "slopeDepth": 1870,
+      "pitchDeg": 45
+     },
      "finishes": {
       "right": {
        "kind": "tile",
@@ -1006,7 +1006,7 @@
    ],
    "furniture": [
     {
-     "id": "f_mw0ttwkpw1tr1",
+     "id": "f_mw0yud84e34o1",
      "name": "Bett 160×200 (Beispiel)",
      "category": "bett",
      "x": 9120,
@@ -1020,7 +1020,7 @@
      "connections": []
     },
     {
-     "id": "f_mw0ttwkp1s9n2",
+     "id": "f_mw0yud845qhy2",
      "name": "Nachttisch (Beispiel)",
      "category": "kommode",
      "x": 10620,
@@ -1034,7 +1034,7 @@
      "connections": []
     },
     {
-     "id": "f_mw0ttwkp1fs23",
+     "id": "f_mw0yud8447ps3",
      "name": "Kleiderschrank (Beispiel)",
      "category": "schrank",
      "x": 5770,
@@ -1050,7 +1050,7 @@
      "connections": []
     },
     {
-     "id": "f_mw0ttwkp8pp14",
+     "id": "f_mw0yud848itk4",
      "name": "Kommode (Beispiel)",
      "category": "kommode",
      "x": 4020,
@@ -1064,7 +1064,7 @@
      "connections": []
     },
     {
-     "id": "f_mw0ttwkpvmvx5",
+     "id": "f_mw0yud84xn9r5",
      "name": "Schreibtisch (Beispiel)",
      "category": "schreibtisch",
      "x": 8220,
@@ -1078,7 +1078,7 @@
      "connections": []
     },
     {
-     "id": "f_mw0ttwkp4ixj6",
+     "id": "f_mw0yud846ys46",
      "name": "Bürostuhl (Beispiel)",
      "category": "stuhl",
      "x": 8220,
@@ -1092,7 +1092,7 @@
      "connections": []
     },
     {
-     "id": "f_mw0ttwkpyji17",
+     "id": "f_mw0yud84o5bp7",
      "name": "Regal (Beispiel)",
      "category": "regal",
      "x": 5940,
@@ -1106,7 +1106,7 @@
      "connections": []
     },
     {
-     "id": "f_mw0ttwkpd7sn8",
+     "id": "f_mw0yud84r1z98",
      "name": "Dusche 89 × 89",
      "category": "dusche",
      "x": 10325,
@@ -1139,7 +1139,7 @@
      ]
     },
     {
-     "id": "f_mw0ttwkpx3pu9",
+     "id": "f_mw0yud84b0jm9",
      "name": "Gemauerter Kasten 155 × 85 (Höhe 68 cm)",
      "category": "sonstiges",
      "x": 12425,
@@ -1153,38 +1153,30 @@
      "connections": []
     },
     {
-     "id": "f_mw0ttwkpj6mu10",
+     "id": "f_mw0yud845dgl10",
      "name": "Podest WC (17 cm)",
      "category": "sonstiges",
      "x": 12770,
-     "y": 6785,
+     "y": 7100,
      "elevation": 0,
      "rotation": 0,
      "width": 860,
-     "depth": 710,
+     "depth": 1340,
      "height": 170,
      "color": "#d9d4cc",
-     "connections": []
+     "connections": [],
+     "corners": {
+      "bl": {
+       "x": 220,
+       "y": 220
+      }
+     }
     },
     {
-     "id": "f_mw0ttwkpdnzo11",
-     "name": "Podest WC-Nische (17 cm)",
-     "category": "sonstiges",
-     "x": 12835,
-     "y": 7455,
-     "elevation": 0,
-     "rotation": 0,
-     "width": 730,
-     "depth": 630,
-     "height": 170,
-     "color": "#d9d4cc",
-     "connections": []
-    },
-    {
-     "id": "f_mw0ttwkpi2jk12",
-     "name": "WC auf Podest (Nische)",
+     "id": "f_mw0yud84iion11",
+     "name": "WC auf Podest",
      "category": "wc",
-     "x": 12835,
+     "x": 12770,
      "y": 7490,
      "elevation": 170,
      "rotation": 180,
@@ -1208,7 +1200,7 @@
      ]
     },
     {
-     "id": "f_mw0ttwkp9v8313",
+     "id": "f_mw0yud84f9k512",
      "name": "Heizkörper 1 m",
      "category": "heizkoerper",
      "x": 13150,
@@ -1235,7 +1227,7 @@
      ]
     },
     {
-     "id": "f_mw0ttwkqrgd314",
+     "id": "f_mw0yud86jze013",
      "name": "Heizkörper (Beispiel)",
      "category": "heizkoerper",
      "x": 9620,
@@ -1590,7 +1582,7 @@
   },
   {
    "id": "a9",
-   "text": "WC-Nische 73 × 63 cm: seitlich durch die Außenwand des Schlafzimmers begrenzt (Skizze: 64 + 31 cm schräg). Wand Schlaf/Bad 24 cm, damit die Bad-Tiefe 2,60 m ergibt.",
+   "text": "WC-Nische 86 × 63 cm, so breit wie das Podest; die Wand zum Schlafzimmer ist dort nur 17 cm stark (innen bündig). Wand Schlaf/Bad 24 cm, damit die Bad-Tiefe 2,60 m ergibt.",
    "levelId": "og",
    "ref": "room:r_bad_og",
    "status": "offen"

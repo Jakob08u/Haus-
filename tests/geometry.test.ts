@@ -176,7 +176,7 @@ describe('Wohnfläche nach WoFlV mit Dachschräge', () => {
     const og = project.levels.find((l) => l.id === 'og')!;
     const eg = project.levels.find((l) => l.id === 'eg')!;
     const knee = Object.fromEntries(og.walls.filter((w) => w.slope).map((w) => [w.id, w.slope!.knee]));
-    expect(knee).toEqual({ og_w_schlaf_rechts: 1150, og_w_schlaf_rechts_t1: 1150, og_w_nische_aussen: 1030, og_w_buero_oben: 1050 });
+    expect(knee).toEqual({ og_w_schlaf_rechts: 1150, og_w_schlaf_nische: 1150, og_w_nische_aussen: 1030, og_w_buero_oben: 1050 });
     expect(og.elevation).toBeGreaterThanOrEqual(eg.elevation + eg.ceilingHeight + og.slabThickness);
     expect(eg.ceilingHeight).toBe(2600);
     const cm = new CeilingModel(og);
@@ -185,8 +185,8 @@ describe('Wohnfläche nach WoFlV mit Dachschräge', () => {
     expect(rooms['Schlafzimmer'].la.minHeight).toBeCloseTo(1030, 0);
     // Deckenhöhen je Raum laut Angabe
     expect(rooms['Bad'].la.maxHeight).toBeCloseTo(2630, 0);
-    // Bad laut Skizze 3,32 × 2,60 m + WC-Nische 0,73 × 0,63 m; die Schräge des Schlafzimmers reicht nicht hinein
-    expect(m2(rooms['Bad'].la.total)).toBeCloseTo(3.32 * 2.6 + 0.73 * 0.63, 2);
+    // Bad laut Skizze 3,32 × 2,60 m + WC-Nische 0,86 × 0,63 m; die Schräge des Schlafzimmers reicht nicht hinein
+    expect(m2(rooms['Bad'].la.total)).toBeCloseTo(3.32 * 2.6 + 0.86 * 0.63, 2);
     expect(rooms['Bad'].la.minHeight).toBeCloseTo(2630, 0);
     expect(rooms['Flur OG'].la.minHeight).toBeCloseTo(2480, 0);
     expect(rooms['Büro'].la.maxHeight).toBeCloseTo(2790, 0);

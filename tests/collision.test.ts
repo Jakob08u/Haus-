@@ -3,6 +3,8 @@ import { checkLevel, clearanceZones } from '../src/checks/checks';
 import { emptyProject, newFurniture } from '../src/model/defaults';
 import type { Level, Project } from '../src/model/types';
 import { boxLevel } from './helpers';
+import { furnitureFootprint } from '../src/geometry/openings';
+import { polygonArea } from '../src/geometry/vec';
 
 function setup(level: Level): Project {
   const p = emptyProject();
@@ -39,6 +41,21 @@ describe('Kollisionsprüfung', () => {
     expect(msgs(l).filter((m) => m.includes('überschneidet'))).toHaveLength(1);
     l.furniture[1] = newFurniture('schrank', 2000, 2000, { width: 800, depth: 350, height: 600, elevation: 1400, id: 'b', doorType: 'none' });
     expect(msgs(l).filter((m) => m.includes('überschneidet'))).toHaveLength(0);
+  });
+
+  it('abgeschrägte Ecke: Umriss folgt der Schräge, in der Ecke ist Platz', () => {
+    const l = boxLevel(4000, 4000);
+    // Podest 86 × 134 cm, hinten links 22 × 22 cm abgeschrägt
+    l.furniture.push(newFurniture('sonstiges', 2000, 2000, { width: 860, depth: 1340, height: 800, id: 'p', corners: { bl: { x: 220, y: 220 } } }));
+    const fp = furnitureFootprint(l.furniture[0]);
+    expect(fp).toHaveLength(5);
+    expect(polygonArea(fp)).toBeCloseTo(860 * 1340 - (220 * 220) / 2, 0);
+    // Würfel 10 × 10 cm genau in der abgeschrägten Ecke: keine Überschneidung
+    l.furniture.push(newFurniture('kommode', 2000 - 430 + 60, 2000 - 670 + 60, { width: 100, depth: 100, height: 800, id: 'k' }));
+    expect(msgs(l).filter((m) => m.includes('überschneidet'))).toHaveLength(0);
+    // ohne Abschrägung schon
+    delete l.furniture[0].corners;
+    expect(msgs(l).filter((m) => m.includes('überschneidet'))).toHaveLength(1);
   });
 
   it('Stuhl unter Schreibtisch ist erlaubt', () => {

@@ -1,4 +1,4 @@
-import type { Opening, RoofWindow, Vec2, Wall, Stair, Furniture } from '../model/types';
+import type { Opening, RoofWindow, Vec2, Wall, Stair, Furniture, FurnitureCorner } from '../model/types';
 import { add, mul, perp, norm, sub, rotate, rectPolygon } from './vec';
 import type { SlopePlane } from './ceiling';
 
@@ -93,8 +93,34 @@ export function furnitureDoorSwing(f: Furniture): Vec2[] | null {
   return local.map((p) => add(rotate(p, f.rotation), c));
 }
 
+/** Umriss in lokalen Koordinaten (Mitte 0,0; Vorderseite +y), inkl. abgeschrägter Ecken */
+export function furnitureLocalOutline(f: Pick<Furniture, 'width' | 'depth' | 'corners'>): Vec2[] {
+  const w = f.width / 2, d = f.depth / 2;
+  const cut = (k: FurnitureCorner) => {
+    const c = f.corners?.[k];
+    if (!c) return null;
+    const x = Math.min(Math.max(0, c.x), f.width), y = Math.min(Math.max(0, c.y), f.depth);
+    return x > 0 && y > 0 ? { x, y } : null;
+  };
+  const bl = cut('bl'), br = cut('br'), fr = cut('fr'), fl = cut('fl');
+  const pts: Vec2[] = [
+    ...(bl ? [{ x: -w, y: -d + bl.y }, { x: -w + bl.x, y: -d }] : [{ x: -w, y: -d }]),
+    ...(br ? [{ x: w - br.x, y: -d }, { x: w, y: -d + br.y }] : [{ x: w, y: -d }]),
+    ...(fr ? [{ x: w, y: d - fr.y }, { x: w - fr.x, y: d }] : [{ x: w, y: d }]),
+    ...(fl ? [{ x: -w + fl.x, y: d }, { x: -w, y: d - fl.y }] : [{ x: -w, y: d }]),
+  ];
+  return pts.filter((p, i) => {
+    const q = pts[(i + 1) % pts.length];
+    return Math.abs(p.x - q.x) > 0.5 || Math.abs(p.y - q.y) > 0.5;
+  });
+}
+
+export const hasCorners = (f: Furniture) => !!f.corners && Object.values(f.corners).some((c) => c && c.x > 0 && c.y > 0);
+
 export function furnitureFootprint(f: Furniture): Vec2[] {
-  return rectPolygon(f.x, f.y, f.width, f.depth, f.rotation);
+  if (!hasCorners(f)) return rectPolygon(f.x, f.y, f.width, f.depth, f.rotation);
+  const c = { x: f.x, y: f.y };
+  return furnitureLocalOutline(f).map((p) => add(rotate(p, f.rotation), c));
 }
 
 /** Front-Richtung (lokal +y) in Weltkoordinaten */
