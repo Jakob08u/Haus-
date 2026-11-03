@@ -9,7 +9,8 @@ import { snapToNearestWall } from '../../plan2d/geom2d';
 import { roomStats } from '../../calc/roomStats';
 import { deleteSelection, rotateSelection } from '../actions';
 import { FurnitureEditor } from './FurnitureEditor';
-import { splitWall, splitWallAtJunctions } from '../../model/ops';
+import { splitWall, splitWallAtJunctions, transformLevel } from '../../model/ops';
+import { useState } from 'react';
 
 function useAssumed(ref: string) {
   const a = useStore((s) => s.project.assumptions);
@@ -67,7 +68,8 @@ function LevelProps({ level }: { level: Level }) {
       <Field label="Höhe über ±0" tag={<AssumeTag show={assumedE} />}><NumInput value={level.elevation} onChange={(v) => upd((l) => void (l.elevation = v))} /></Field>
       <Field label="Deckenhöhe (flach)" tag={<AssumeTag show={assumedH} />}><NumInput value={level.ceilingHeight} min={1000} onChange={(v) => upd((l) => void (l.ceilingHeight = v))} /></Field>
       <Field label="Deckenstärke"><NumInput value={level.slabThickness} onChange={(v) => upd((l) => void (l.slabThickness = v))} /></Field>
-      <p className="hint">Schrägen werden pro Wand eingestellt (Wand anklicken → „Dachschräge“). Die flache Decke begrenzt die Schrägen nach oben (Kehlbalkenlage).</p>
+      <p className="hint">Falls einzelne Wände eine Dachschräge haben: Wand anklicken → „Dachschräge“. Die flache Decke begrenzt Schrägen nach oben.</p>
+      <LevelMove level={level} />
       <h4>Hintergrund (Grundriss-Bild/PDF)</h4>
       <div className="row">
         <label className="btnlike">
@@ -109,6 +111,36 @@ function LevelProps({ level }: { level: Level }) {
       </div>
       <p className="hint">Tipp: Objekt im Grundriss oder in 3D anklicken, um es zu bearbeiten. Alle Maße in cm, Komma oder Punkt erlaubt.</p>
     </div>
+  );
+}
+
+/** Ganze Ebene verschieben/drehen – z. B. um Geschosse übereinander auszurichten */
+function LevelMove({ level }: { level: Level }) {
+  const [d, setD] = useState({ x: 0, y: 0 });
+  const center = () => {
+    const pts = level.walls.flatMap((w) => [w.a, w.b]);
+    if (!pts.length) return { x: 0, y: 0 };
+    const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+    return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 };
+  };
+  return (
+    <>
+      <h4>Ebene verschieben / drehen</h4>
+      <div className="hint">Zum Ausrichten der Geschosse übereinander. Tipp: in 3D „Alle Ebenen“ einschalten und im 2D-Plan die andere Ebene als Hintergrund vergleichen.</div>
+      <Field label="Versatz x / y">
+        <NumInput value={d.x} onChange={(v) => setD({ ...d, x: v })} />
+        <NumInput value={d.y} onChange={(v) => setD({ ...d, y: v })} />
+        <button onClick={() => {
+          upd((l) => transformLevel(l, { dx: d.x, dy: d.y }));
+          setD({ x: 0, y: 0 });
+        }}>Verschieben</button>
+      </Field>
+      <div className="row">
+        <button onClick={() => { const c = center(); upd((l) => transformLevel(l, { rotate: -90, cx: c.x, cy: c.y })); }}>⟲ 90° drehen</button>
+        <button onClick={() => { const c = center(); upd((l) => transformLevel(l, { rotate: 90, cx: c.x, cy: c.y })); }}>⟳ 90° drehen</button>
+        <button onClick={() => { const c = center(); upd((l) => transformLevel(l, { rotate: 180, cx: c.x, cy: c.y })); }}>180°</button>
+      </div>
+    </>
   );
 }
 

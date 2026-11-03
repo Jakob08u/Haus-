@@ -12,13 +12,13 @@ const project = JSON.parse(readFileSync(resolve(__dirname, '../projekt.json'), '
 const m2 = (mm2: number) => Math.round((mm2 / 1e6) * 100) / 100;
 
 describe('Startprojekt aus dem Grundriss', () => {
-  it('DG-Raumflächen stimmen mit der handschriftlichen Vinyl-Rechnung überein', () => {
-    const dg = project.levels.find((l) => l.id === 'dg')!;
+  it('OG-Raumflächen stimmen mit der handschriftlichen Vinyl-Rechnung überein', () => {
+    const dg = project.levels.find((l) => l.id === 'og')!;
     const rooms = Object.fromEntries(detectRooms(dg).map((r) => [r.name, m2(r.netArea)]));
     // Skizze: 3,39 × 6,38 = 21,63
     expect(rooms['Büro']).toBeCloseTo(21.63, 2);
     // 2,57 × 1,12 + 1,35 × 2,98 = 2,88 + 4,02 (Treppenloch abgezogen)
-    expect(rooms['Flur DG']).toBeCloseTo(6.9, 1);
+    expect(rooms['Flur OG']).toBeCloseTo(6.9, 1);
     // 2,21 × 3,55 + 2,96 × 5,10 + 1,46 × 2,29 = 7,85 + 15,10 + 3,34
     expect(rooms['Schlafzimmer']).toBeCloseTo(26.29, 1);
     expect(Object.keys(rooms)).toHaveLength(4);
@@ -122,13 +122,15 @@ describe('Wohnfläche nach WoFlV mit Dachschräge', () => {
     expect(m2(la.above2)).toBeCloseTo(10, 2);
   });
 
-  it('DG: Wohnfläche kleiner als Grundfläche wegen Schrägen', () => {
-    const dg = project.levels.find((l) => l.id === 'dg')!;
-    const cm = new CeilingModel(dg);
-    const buero = detectRooms(dg).find((r) => r.name === 'Büro')!;
-    const la = cm.livingArea(buero.net);
-    // Kniestock 1,05 m, 45°, Decke 2,40: 0,95 m Streifen × 6,38 m zur Hälfte
-    expect(m2(la.between1and2)).toBeCloseTo(0.95 * 6.38, 1);
-    expect(m2(la.living)).toBeCloseTo(21.63 - 0.5 * 0.95 * 6.38, 1);
+  it('Zweigeschossiges Haus: OG ohne Schrägen, Wohnfläche = Grundfläche, Geschosse übereinander', () => {
+    const og = project.levels.find((l) => l.id === 'og')!;
+    const eg = project.levels.find((l) => l.id === 'eg')!;
+    expect(og.walls.some((w) => w.slope)).toBe(false);
+    expect(og.elevation).toBe(eg.elevation + eg.ceilingHeight + og.slabThickness);
+    const cm = new CeilingModel(og);
+    for (const r of detectRooms(og)) expect(cm.livingArea(r.net).living).toBeCloseTo(r.netArea, -2);
+    // Treppenloch OG liegt über der Treppe im EG
+    const so = og.stairs[0], se = eg.stairs[0];
+    expect(Math.hypot(so.x - se.x, so.y - se.y)).toBeLessThan(5);
   });
 });

@@ -93,6 +93,7 @@ export const defaultLayers: Record<LayerKey, boolean> = {
   schraegen: true,
   bewegung: true,
   warnungen: true,
+  unterlage: true,
 };
 
 export const useStore = create<State>((set, get) => ({

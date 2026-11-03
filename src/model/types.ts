@@ -333,4 +333,4 @@ export interface Project {
 
 export type LayerKey =
   | 'grundriss' | 'hintergrund' | 'raster' | 'masse' | 'raeume' | 'moebel' | 'elektro'
-  | 'strom' | 'wasser' | 'abwasser' | 'heizung' | 'lan' | 'zonen' | 'schraegen' | 'bewegung' | 'warnungen';
+  | 'strom' | 'wasser' | 'abwasser' | 'heizung' | 'lan' | 'zonen' | 'schraegen' | 'bewegung' | 'warnungen' | 'unterlage';

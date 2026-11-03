@@ -8,6 +8,7 @@ import { TextInput } from './inputs';
 const LAYER_LABELS: [LayerKey, string][] = [
   ['grundriss', 'Wände/Öffnungen/Treppen'],
   ['hintergrund', 'Hintergrundbild'],
+  ['unterlage', 'Geschoss darunter (Unterlage)'],
   ['raster', 'Raster'],
   ['masse', 'Maße'],
   ['raeume', 'Räume'],

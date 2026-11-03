@@ -1,6 +1,6 @@
-# Raumplaner Dachgeschoss (2D + 3D)
+# Raumplaner Haus (2D + 3D)
 
-Lokale Web-App zum Durchplanen des Dachgeschosses: Wände, Dachschrägen, Türen/Fenster, Treppe, Elektro und Leitungen, Möbel (auch per Shop-Link), Tapeten, Farben, Fliesen und Böden. Alles wird aus **einem** Projekt-JSON im 2D-Grundriss und in 3D dargestellt und laufend geprüft („Passt alles?“).
+Lokale Web-App zum Durchplanen des zweigeschossigen Hauses (Erdgeschoss und Obergeschoss): Wände, Türen/Fenster, Treppe, Elektro und Leitungen, Möbel (auch per Shop-Link), Tapeten, Farben, Fliesen und Böden. Dachschrägen lassen sich bei Bedarf je Wand einstellen. Alles wird aus **einem** Projekt-JSON im 2D-Grundriss und in 3D dargestellt und laufend geprüft („Passt alles?“).
 
 ## Start
 
@@ -77,9 +77,13 @@ Weitere Befehle:
 - **3D:**
   - *Orbit*: drehen, verschieben, zoomen.
   - *Begehen*: ins Bild klicken, dann WASD und Maus; die Augenhöhe passt sich unter Schrägen an.
-  - Weitere Schalter: *Decke/Schrägen*, *Geschlossen* (Decke auch von außen sichtbar), *Schnitt* (Wände gekürzt), *Alle Ebenen*, Sonne (Tageslicht durch Fenster und Dachfenster), Lampen.
+  - Weitere Schalter: *Decke/Schrägen*, *Geschlossen* (Decke auch von außen sichtbar), *Schnitt* (Wände gekürzt), *Alle Ebenen* (EG und OG übereinander mit Geschossdecke), Sonne (Tageslicht durch Fenster und Dachfenster), Lampen.
   - Möbel lassen sich auch in 3D ziehen.
   - *Ansicht speichern* sichert Kamerapositionen für Bilder und das PDF.
+- **Geschosse übereinander ausrichten:**
+  - Im 2D-Plan liegt das Geschoss darunter grau als Unterlage (Ebenen-Menü → „Geschoss darunter“).
+  - Eigenschaften (ohne Auswahl) → *Ebene verschieben / drehen*: ganze Ebene um x/y verschieben oder um 90° drehen.
+  - Kontrolle in 3D mit *Alle Ebenen*: Treppenloch im OG und Treppe im EG müssen übereinander liegen.
 - **Grundriss als Hintergrund:**
   1. Eigenschaften (ohne Auswahl) → *Bild/PDF laden*.
   2. *Kalibrieren*: zwei Punkte einer bekannten Strecke anklicken.
@@ -98,10 +102,10 @@ Weitere Befehle:
 
 ## Startprojekt & Annahmen
 
-Der Ordner `grundriss/` war im Repository leer. Grundlage sind deshalb die beiden geschickten Fotos:
+Das Haus hat zwei Geschosse. Grundlage sind die beiden geschickten Fotos:
 
-- `grundriss/dg-oben.png`: Skizze „oben“ (Dachgeschoss)
 - `grundriss/eg-unten.png`: Skizze „unten“ (Erdgeschoss)
+- `grundriss/dg-oben.png`: Skizze „oben“ (Obergeschoss; der Dateiname stammt noch vom ersten Stand)
 
 Daraus erzeugt `scripts/generate-startprojekt.ts` die Datei `projekt.json`.
 
@@ -109,37 +113,30 @@ Daraus erzeugt `scripts/generate-startprojekt.ts` die Datei `projekt.json`.
 
 | Raum | Skizze | App |
 |---|---|---|
-| Büro | 3,39 × 6,38 = 21,63 m² | 21,63 m² |
-| Flur DG | 2,88 + 4,02 = 6,90 m² | 6,90 m² (Treppenloch abgezogen) |
-| Schlafzimmer | 7,85 + 15,10 + 3,34 = 26,29 m² | 26,28 m² |
-| Bad DG | – | 6,16 m² (abgeleitet) |
+| Büro (OG) | 3,39 × 6,38 = 21,63 m² | 21,63 m² |
+| Flur OG | 2,88 + 4,02 = 6,90 m² | 6,90 m² (Treppenloch abgezogen) |
+| Schlafzimmer (OG) | 7,85 + 15,10 + 3,34 = 26,29 m² | 26,28 m² |
+| Bad OG | – | 6,16 m² (abgeleitet) |
 | EG: Küche / Wohnen / Gäste / Vorraum | 21,16 / 24,50 / 17,85 / 2,70 m² | identisch |
 
 Alle Annahmen stehen im Tab **Annahmen** und sind im Editor violett markiert. Die wichtigsten:
 
-1. **Orientierung:** Das Foto ist um 90° gedreht, damit Büro oben, Bad rechts und Schlafzimmer unten liegt.
-2. **Dachschrägen:** Die markierte Skizze (blau/gelb) lag nicht vor. Angenommen sind:
-   - Büro an der oberen Außenwand, Kniestock 1,05 m
-   - Schlafzimmer links (Nische) 1,03 m und rechts 1,15 m
-   - Bad rechts 1,15 m
-   - alle mit 45° Neigung
-   - flache Decke (Kehlbalkenlage) bei 2,40 m
-   - Flur ohne Schräge
-3. **Wandstärken:**
+1. **Zwei Vollgeschosse:** Obergeschoss mit voller Raumhöhe, flache Decke bei 2,50 m, keine Dachschrägen. Geschosshöhe EG → OG 2,75 m.
+2. **Orientierung:** Beide Skizzen sind gleich ausgerichtet angenommen und für die Darstellung um 90° gedreht, damit im OG Büro oben, Bad rechts und Schlafzimmer unten liegt.
+3. **Lage OG über EG:** linke Außenwand bündig, das Treppenloch des OG liegt über dem Flur EG (OG dafür um 43 cm versetzt). Die Skizzen sind nicht maßstäblich – bitte prüfen und bei Bedarf mit *Ebene verschieben / drehen* korrigieren.
+4. **Treppe EG:** in der Skizze nicht eingezeichnet; angenommen im Flur EG direkt unter dem Treppenloch, 15 Steigungen.
+5. **Wandstärken:**
    - außen 30 cm
-   - innen nach den Laibungsmaßen der Vinyl-Rechnung: Schlaf/Flur 20 cm, Flur/Büro 30 cm
+   - innen im OG nach den Laibungsmaßen der Vinyl-Rechnung: Schlaf/Flur 20 cm, Flur/Büro 30 cm
    - Treppe/Bad 24 cm (aus 2,57 m und 2,29 m)
    - Schlaf/Bad 15 cm
-4. **Bad:** 2,69 × 2,29 m, abgeleitet.
-5. **Büro:** ragt 1,28 m über die Flurwand hinaus.
-6. **Wandtyp:** Alle Wände sind als Bestand eingetragen.
-7. **Fenster und Dachfenster:** Positionen geschätzt.
-8. **Treppe:** 15 Steigungen.
-9. **Geschosshöhe:** EG → DG 2,75 m.
-10. **Erdgeschoss:** nur als Referenz übernommen, nicht mit dem DG ausgerichtet.
-11. **Beispiele:** Möbel, Elektro und Oberflächen im Startprojekt sind Beispiele, frei löschbar.
+6. **Bad OG:** 2,69 × 2,29 m, abgeleitet.
+7. **Büro:** ragt 1,28 m über die Flurwand hinaus.
+8. **Wandtyp:** Alle Wände sind als Bestand eingetragen.
+9. **Fenster:** nicht in den Skizzen, Positionen geschätzt.
+10. **Beispiele:** Möbel, Elektro und Oberflächen im Startprojekt sind Beispiele, frei löschbar.
 
-Die Skizze ist nicht maßstäblich. Der Hintergrund ist deshalb nur grob überlagert (mit Verzerrung H/B). Einen maßstäblichen Plan lädst du über *Bild/PDF laden* und richtest ihn mit *Kalibrieren* aus.
+Die Skizzen sind nicht maßstäblich. Der Hintergrund ist deshalb nur grob überlagert (mit Verzerrung H/B). Einen maßstäblichen Plan lädst du über *Bild/PDF laden* und richtest ihn mit *Kalibrieren* aus.
 
 ## Link-Import: Stand der Tests
 

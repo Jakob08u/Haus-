@@ -50,7 +50,7 @@ export const emptyProject = (): Project => {
     name: 'Neues Projekt',
     createdAt: now,
     updatedAt: now,
-    levels: [emptyLevel('Dachgeschoss')],
+    levels: [emptyLevel('Erdgeschoss')],
     materials: defaultMaterials(),
     cameras: [],
     assumptions: [],

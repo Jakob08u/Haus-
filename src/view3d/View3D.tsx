@@ -6,7 +6,8 @@ import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLigh
 import { useStore, useLevel } from '../store/store';
 import { derive } from '../store/derived';
 import type { Level, Project, Furniture, Vec2 } from '../model/types';
-import { buildWallGeometries, ceilingGeometries, floorGeometry, S, V3 } from './buildGeometry';
+import { buildWallGeometries, ceilingGeometries, floorGeometry, multiToShapes, S, V3 } from './buildGeometry';
+import { union, difference } from '../geometry/polygon';
 import { FurnitureModel } from './Furniture3D';
 import { finishLook, floorLook } from './textures';
 import { openingGeom, doorSwing, roofWindowCorners3D, stairSteps } from '../geometry/openings';
@@ -88,9 +89,9 @@ export default function View3D() {
         <color attach="background" args={['#dfe6ee']} />
         <Lights level={level} sun={v3.sun} />
         {levels.map((l) => (
-          <LevelScene key={l.id} level={l} project={project} active={l.id === level.id} showCeiling={v3.showCeiling && cut == null} cut={cut} lampsOn={v3.lampsOn} closedRoof={v3.showRoof} />
+          <LevelScene key={l.id} level={l} project={project} active={l.id === level.id} showCeiling={v3.showCeiling && cut == null} cut={cut} lampsOn={v3.lampsOn} closedRoof={v3.showRoof} stacked={v3.allLevels} />
         ))}
-        <GroundPlane level={level} />
+        <GroundPlane elevation={v3.allLevels ? Math.min(...project.levels.map((l) => l.elevation)) : level.elevation} />
         <Controls level={level} camRef={camRef} />
         {measure.space === '3d' && measure.points.length > 0 && <Measure3D points={measure.points} />}
       </Canvas>
@@ -179,9 +180,9 @@ function Lights({ level, sun }: { level: Level; sun: number }) {
   );
 }
 
-function GroundPlane({ level }: { level: Level }) {
+function GroundPlane({ elevation }: { elevation: number }) {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, level.elevation * S - 0.02, 0]} receiveShadow>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, elevation * S - 0.02, 0]} receiveShadow>
       <planeGeometry args={[200, 200]} />
       <meshStandardMaterial color="#cfd6cf" roughness={1} />
     </mesh>
@@ -192,7 +193,18 @@ function useClip(level: Level, cut: number | null) {
   return useMemo(() => (cut == null ? [] : [new THREE.Plane(new THREE.Vector3(0, -1, 0), (level.elevation + cut) * S)]), [cut, level.elevation]);
 }
 
-function LevelScene({ level, project, active, showCeiling, cut, lampsOn, closedRoof }: { level: Level; project: Project; active: boolean; showCeiling: boolean; cut: number | null; lampsOn: boolean; closedRoof: boolean }) {
+/** Geschosshöhe zur nächsten Ebene oben bzw. von der Ebene darunter (für Treppen) */
+function storeyHeights(level: Level, project: Project) {
+  const above = project.levels.filter((l) => l.elevation > level.elevation).map((l) => l.elevation);
+  const below = project.levels.filter((l) => l.elevation < level.elevation).map((l) => l.elevation);
+  return {
+    up: above.length ? Math.min(...above) - level.elevation : level.ceilingHeight + level.slabThickness,
+    down: below.length ? level.elevation - Math.max(...below) : level.elevation > 0 ? level.elevation : level.ceilingHeight + level.slabThickness,
+    hasBelow: below.length > 0,
+  };
+}
+
+function LevelScene({ level, project, active, showCeiling, cut, lampsOn, closedRoof, stacked }: { level: Level; project: Project; active: boolean; showCeiling: boolean; cut: number | null; lampsOn: boolean; closedRoof: boolean; stacked: boolean }) {
   const D = derive(level);
   const selection = useStore((s) => s.selection);
   const tool = useStore((s) => s.tool);
@@ -250,6 +262,8 @@ function LevelScene({ level, project, active, showCeiling, cut, lampsOn, closedR
           />
         );
       })}
+      {/* Geschossdecke unter oberen Ebenen (nur in „Alle Ebenen“) */}
+      {stacked && level.elevation > 0 && <Slab level={level} />}
       {/* Böden */}
       {roomFloors.map(({ r, geom, look }) => (
         <mesh key={'f' + r.key} geometry={geom} receiveShadow onClick={(e) => {
@@ -278,7 +292,7 @@ function LevelScene({ level, project, active, showCeiling, cut, lampsOn, closedR
         )}
       {/* Treppen */}
       {level.stairs.map((s) => (
-        <Stair3D key={s.id} level={level} stairId={s.id} selected={selection?.kind === 'stair' && selection.id === s.id} onSelect={() => active && st().select({ kind: 'stair', id: s.id })} />
+        <Stair3D key={s.id} level={level} stairId={s.id} heights={storeyHeights(level, project)} hideSteps={stacked && s.isOpening && storeyHeights(level, project).hasBelow} selected={selection?.kind === 'stair' && selection.id === s.id} onSelect={() => active && st().select({ kind: 'stair', id: s.id })} />
       ))}
       {/* Öffnungen */}
       <Openings3D level={level} />
@@ -351,6 +365,25 @@ function LevelScene({ level, project, active, showCeiling, cut, lampsOn, closedR
       {/* Installationszonen */}
       {layers.zonen && active && <Zones3D level={level} />}
     </group>
+  );
+}
+
+function Slab({ level }: { level: Level }) {
+  const D = derive(level);
+  const geom = useMemo(() => {
+    const outline = union([...D.footprints.values()].map((f) => f.polygon));
+    const holes = level.stairs.filter((st) => st.isOpening).map(stairPolygon);
+    const region = holes.length ? difference(outline, ...holes) : outline;
+    const g = new THREE.ExtrudeGeometry(multiToShapes(region), { depth: Math.max(10, level.slabThickness - 3), bevelEnabled: false });
+    // (x, y, z) Form → (x, z − Deckenstärke, y) in Metern
+    g.applyMatrix4(new THREE.Matrix4().set(S, 0, 0, 0, 0, 0, S, -level.slabThickness * S, 0, S, 0, 0, 0, 0, 0, 1));
+    g.computeVertexNormals();
+    return g;
+  }, [D, level.stairs, level.slabThickness]);
+  return (
+    <mesh geometry={geom} castShadow receiveShadow>
+      <meshStandardMaterial color="#d9d4cc" roughness={0.95} side={THREE.DoubleSide} />
+    </mesh>
   );
 }
 
@@ -437,9 +470,9 @@ function Openings3D({ level }: { level: Level }) {
   return <>{items}</>;
 }
 
-function Stair3D({ level, stairId, selected, onSelect }: { level: Level; stairId: string; selected: boolean; onSelect: () => void }) {
+function Stair3D({ level, stairId, selected, onSelect, heights, hideSteps }: { level: Level; stairId: string; selected: boolean; onSelect: () => void; heights: { up: number; down: number }; hideSteps: boolean }) {
   const s = level.stairs.find((x) => x.id === stairId)!;
-  const H = level.elevation > 0 ? level.elevation : 2750;
+  const H = s.isOpening ? heights.down : heights.up;
   const steps = stairSteps(s);
   const n = steps.length;
   const rise = H / s.steps;
@@ -448,7 +481,7 @@ function Stair3D({ level, stairId, selected, onSelect }: { level: Level; stairId
   const poly = stairPolygon(s);
   return (
     <group onClick={(e) => { e.stopPropagation(); onSelect(); }}>
-      {steps.map((st) => {
+      {!hideSteps && steps.map((st) => {
         // Index entlang Laufrichtung: aufwärts zur Ebene hin (Treppenloch: von unten kommend)
         const k = dirSign > 0 ? st.index : n - 1 - st.index;
         const topZ = s.isOpening ? -H + rise * (k + 1) : rise * (k + 1);
@@ -466,7 +499,10 @@ function Stair3D({ level, stairId, selected, onSelect }: { level: Level; stairId
       {(['left', 'right'] as const).map((side) => {
         if (!s.railing[side]) return null;
         const a = side === 'left' ? poly[0] : poly[3], b = side === 'left' ? poly[1] : poly[2];
-        return <Line key={side} points={[V3(a.x, a.y, 950), V3(b.x, b.y, 950)]} color="#444" lineWidth={4} />;
+        // Treppenloch: Geländer waagrecht auf 95 cm; Treppe nach oben: Handlauf steigt mit
+        const za = s.isOpening ? 950 : 950 + (dirSign > 0 ? rise : H),
+          zb = s.isOpening ? 950 : 950 + (dirSign > 0 ? H : rise);
+        return <Line key={side} points={[V3(a.x, a.y, za), V3(b.x, b.y, zb)]} color="#444" lineWidth={4} />;
       })}
       {(['left', 'right'] as const).map((side) => {
         if (!s.railing[side]) return null;
@@ -477,8 +513,9 @@ function Stair3D({ level, stairId, selected, onSelect }: { level: Level; stairId
           <group key={side + 'p'}>
             {Array.from({ length: N + 1 }, (_, i) => {
               const p = add(a, mul(sub(b, a), i / N));
+              const base = s.isOpening ? 0 : dirSign > 0 ? rise + (H - rise) * (i / N) : H - (H - rise) * (i / N);
               return (
-                <mesh key={i} position={V3(p.x, p.y, 475)}>
+                <mesh key={i} position={V3(p.x, p.y, base + 475)}>
                   <boxGeometry args={[0.02, 0.95, 0.02]} />
                   <meshStandardMaterial color="#555" />
                 </mesh>

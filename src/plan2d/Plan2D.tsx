@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStore, useLevel, type Selection } from '../store/store';
 import { derive } from '../store/derived';
-import type { Furniture, Level, LinePoint, Vec2, Wall } from '../model/types';
+import type { Furniture, Level, LinePoint, Project, Vec2, Wall } from '../model/types';
 import { add, bbox, dist, dot, fmtCm, fmtM2, mul, norm, perp, pointInPolygon, polygonArea, projectT, rotate, sub, uid, closestOnSegment, polygonCentroid } from '../geometry/vec';
 import { snapPoint, type SnapResult } from './snap';
 import { newFurniture, newOpening, ELEC_INFO, WALL_TYPE_INFO, LINE_INFO, CATEGORY_INFO } from '../model/defaults';
@@ -736,6 +736,8 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
               style={{ pointerEvents: 'none' }}
             />
           )}
+          {/* Nachbargeschoss als Unterlage (darunter, sonst darüber) */}
+          {layers.unterlage && !printMode && <Underlay project={project} level={level} />}
           {/* Raster */}
           {layers.raster && !printMode && <Grid view={view} size={size} step={gridStep} />}
 
@@ -1095,6 +1097,21 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
         </div>
       )}
     </div>
+  );
+}
+
+function Underlay({ project, level }: { project: Project; level: Level }) {
+  const below = project.levels.filter((l) => l.elevation < level.elevation).sort((a, b) => b.elevation - a.elevation)[0];
+  const other = below ?? project.levels.filter((l) => l.elevation > level.elevation).sort((a, b) => a.elevation - b.elevation)[0];
+  if (!other) return null;
+  const D = derive(other);
+  return (
+    <g style={{ pointerEvents: 'none' }} opacity={0.5}>
+      <path d={multiPath([...D.outlineByType.bestand, ...D.outlineByType.neu])} fill="#c7cdd6" fillRule="nonzero" stroke="#94a3b8" />
+      {other.stairs.map((s) => (
+        <path key={s.id} d={ringPath(stairPolygon(s))} fill="none" stroke="#a16207" strokeDasharray="60 40" strokeWidth={20} />
+      ))}
+    </g>
   );
 }
 
