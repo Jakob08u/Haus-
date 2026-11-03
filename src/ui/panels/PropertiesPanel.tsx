@@ -219,15 +219,36 @@ function WallProps({ id }: { id: string }) {
           </Field>
           <Field label="Kniestockhöhe"><NumInput value={w.slope.knee} onChange={(v) => upd((l) => void (l.walls.find((x) => x.id === id)!.slope!.knee = v))} /></Field>
           <Field label="Angabe über">
-            <Select value={w.slope.mode} options={[{ value: 'pitch', label: 'Dachneigung' }, { value: 'ridge', label: 'Firsthöhe + Abstand' }]} onChange={(v) => upd((l) => void (l.walls.find((x) => x.id === id)!.slope!.mode = v as 'pitch' | 'ridge'))} />
+            <Select
+              value={w.slope.mode}
+              options={[
+                { value: 'pitch', label: 'Dachneigung (Winkel)' },
+                { value: 'length', label: 'Länge der Schräge' },
+                { value: 'depth', label: 'Tiefe der Schräge (waagrecht)' },
+                { value: 'ridge', label: 'Firsthöhe + Abstand' },
+              ]}
+              onChange={(v) => upd((l) => void (l.walls.find((x) => x.id === id)!.slope!.mode = v as 'pitch' | 'ridge' | 'length' | 'depth'))}
+            />
           </Field>
-          {w.slope.mode === 'pitch' ? (
+          {w.slope.mode === 'length' && (
+            <>
+              <Field label="Länge der Schräge"><NumInput value={w.slope.slopeLength} onChange={(v) => upd((l) => void (l.walls.find((x) => x.id === id)!.slope!.slopeLength = v))} /></Field>
+              <div className="hint">gemessen entlang der Schräge vom Kniestock bis zur flachen Decke ({fmtCm(level.ceilingHeight)} cm) → {slopePitch(w.slope, level.ceilingHeight).toFixed(1).replace('.', ',')}° Neigung</div>
+            </>
+          )}
+          {w.slope.mode === 'depth' && (
+            <>
+              <Field label="Tiefe der Schräge"><NumInput value={w.slope.slopeDepth} onChange={(v) => upd((l) => void (l.walls.find((x) => x.id === id)!.slope!.slopeDepth = v))} /></Field>
+              <div className="hint">waagrecht von der Kniestockwand bis zur flachen Decke ({fmtCm(level.ceilingHeight)} cm) → {slopePitch(w.slope, level.ceilingHeight).toFixed(1).replace('.', ',')}° Neigung</div>
+            </>
+          )}
+          {w.slope.mode === 'length' || w.slope.mode === 'depth' ? null : w.slope.mode === 'pitch' ? (
             <Field label="Neigung"><NumInput value={w.slope.pitchDeg} factor={1} unit="°" min={5} max={85} onChange={(v) => upd((l) => void (l.walls.find((x) => x.id === id)!.slope!.pitchDeg = v))} /></Field>
           ) : (
             <>
               <Field label="Firsthöhe"><NumInput value={w.slope.ridgeHeight} onChange={(v) => upd((l) => void (l.walls.find((x) => x.id === id)!.slope!.ridgeHeight = v))} /></Field>
               <Field label="Abstand Wand→First"><NumInput value={w.slope.ridgeDistance} onChange={(v) => upd((l) => void (l.walls.find((x) => x.id === id)!.slope!.ridgeDistance = v))} /></Field>
-              <div className="hint">ergibt {slopePitch(w.slope).toFixed(1).replace('.', ',')}° Neigung</div>
+              <div className="hint">ergibt {slopePitch(w.slope, level.ceilingHeight).toFixed(1).replace('.', ',')}° Neigung</div>
             </>
           )}
         </>

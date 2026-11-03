@@ -47,14 +47,19 @@ function pointSegDistLocal(p: Vec2, a: Vec2, b: Vec2) {
   return Math.hypot(p.x - (a.x + abx * t), p.y - (a.y + aby * t));
 }
 
-export function slopePitch(s: Slope): number {
+/** Neigung in Grad; für length/depth wird die flache Deckenhöhe der Ebene gebraucht */
+export function slopePitch(s: Slope, ceilingHeight = 2500): number {
+  const rise = ceilingHeight - s.knee;
+  if (s.mode === 'length' && s.slopeLength && s.slopeLength > 0 && rise > 0)
+    return (Math.asin(Math.min(1, rise / s.slopeLength)) * 180) / Math.PI;
+  if (s.mode === 'depth' && s.slopeDepth && s.slopeDepth > 0 && rise > 0) return (Math.atan2(rise, s.slopeDepth) * 180) / Math.PI;
   if (s.mode === 'ridge' && s.ridgeHeight != null && s.ridgeDistance && s.ridgeDistance > 0) {
     return (Math.atan2(s.ridgeHeight - s.knee, s.ridgeDistance) * 180) / Math.PI;
   }
   return s.pitchDeg;
 }
 
-export function slopePlanes(walls: Wall[]): SlopePlane[] {
+export function slopePlanes(walls: Wall[], ceilingHeight = 2500): SlopePlane[] {
   const planes: SlopePlane[] = [];
   for (const w of walls) {
     if (!w.slope) continue;
@@ -67,7 +72,7 @@ export function slopePlanes(walls: Wall[]): SlopePlane[] {
     const half = w.thickness / 2;
     const innerA = { x: w.a.x + inn.x * half, y: w.a.y + inn.y * half };
     const innerB = { x: w.b.x + inn.x * half, y: w.b.y + inn.y * half };
-    const pitch = Math.max(1, Math.min(89, slopePitch(w.slope)));
+    const pitch = Math.max(1, Math.min(89, slopePitch(w.slope, ceilingHeight)));
     const tan = Math.tan((pitch * Math.PI) / 180);
     // h = knee + tan * (inn·(p - innerA))
     const fn: Affine = { ax: tan * inn.x, ay: tan * inn.y, c: w.slope.knee - tan * (inn.x * innerA.x + inn.y * innerA.y) };
@@ -90,7 +95,7 @@ export class CeilingModel {
   planes: SlopePlane[];
   H: number;
   constructor(public level: Level) {
-    this.planes = slopePlanes(plannedWalls(level));
+    this.planes = slopePlanes(plannedWalls(level), level.ceilingHeight);
     this.H = level.ceilingHeight;
   }
 

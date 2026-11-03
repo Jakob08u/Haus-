@@ -106,7 +106,7 @@ Das Haus hat zwei Geschosse. Grundlage sind die beiden geschickten Fotos:
 
 - `grundriss/eg-unten.png`: Skizze „unten“ (Erdgeschoss)
 - `grundriss/dg-oben.png`: Skizze „oben“ (Obergeschoss; der Dateiname stammt noch vom ersten Stand)
-- `grundriss/og-markiert.jpg`: dieselbe Skizze gedreht und markiert – Dachschrägen blau, Treppe gelb (wird in der App als Hintergrund des OG verwendet)
+- `grundriss/og-markiert.jpg`: dieselbe Skizze gedreht und markiert – Dachschrägen blau (Beginn und Länge), Treppe gelb; in der App Hintergrund des OG
 
 Daraus erzeugt `scripts/generate-startprojekt.ts` die Datei `projekt.json`.
 
@@ -124,14 +124,15 @@ Alle Annahmen stehen im Tab **Annahmen** und sind im Editor violett markiert. Di
 
 1. **Dachschrägen im OG (deine Angabe):**
 
-   | Raum | Wand | Kniestock |
-   |---|---|---|
-   | Schlafzimmer | rechts | 1,87 m |
-   | Schlafzimmer | links (Nische) | 1,97 m |
-   | Büro | oben | 1,67 m |
-   | Bad, Flur | – | keine Schräge |
+   | Raum | Wand | Schräge beginnt bei (Kniestock) | Länge der Schräge | ergibt Neigung |
+   |---|---|---|---|---|
+   | Schlafzimmer | rechts | 1,15 m | 1,87 m | ca. 46° |
+   | Schlafzimmer | links (Nische) | 1,03 m | 1,97 m | ca. 48° |
+   | Büro | oben | 1,05 m | 1,67 m | ca. 60° |
+   | Bad, Flur | – | keine Schräge | | |
 
-   Angenommen: Dachneigung 45°, flache Decke im OG bei 2,50 m, Geschosshöhe EG → OG 2,75 m.
+   Angenommen: Die zweite Angabe ist die Länge entlang der Schräge bis zur flachen Decke, und die flache Decke im OG liegt bei 2,50 m. Daraus rechnet die App die Neigung. Ist es stattdessen die waagrechte Tiefe: Wand anklicken → „Angabe über: Tiefe der Schräge“. Geschosshöhe EG → OG 2,75 m.
+   In den Schrägen sitzen geschätzte Dachfenster (78 × 118 bzw. 78 × 140 cm).
 2. **Orientierung:** Beide Skizzen sind gleich ausgerichtet angenommen und für die Darstellung um 90° gedreht, damit im OG Büro oben, Bad rechts und Schlafzimmer unten liegt.
 3. **Lage OG über EG:** linke Außenwand bündig, das Treppenloch des OG liegt über dem Flur EG (OG dafür um 43 cm versetzt). Die Skizzen sind nicht maßstäblich – bitte prüfen und bei Bedarf mit *Ebene verschieben / drehen* korrigieren.
 4. **Treppe EG:** in der Skizze nicht eingezeichnet; angenommen im Flur EG direkt unter dem Treppenloch, 15 Steigungen.

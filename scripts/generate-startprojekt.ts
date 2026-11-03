@@ -78,14 +78,15 @@ const ogC = {
   nische: toUser({ x: 1100, y: -1800 }),
 };
 
-// Dachschrägen laut Angabe (Kniestockhöhe = Wandhöhe bis zur Schräge); Neigung 45° angenommen
-function slope(key: string, knee: number, towards: Vec2) {
+// Dachschrägen laut Angabe: Kniestock = Höhe, wo die Schräge beginnt; zweite Angabe als Länge der
+// Schräge (entlang der Fläche bis zur flachen Decke) gedeutet → Neigung ergibt sich aus der Deckenhöhe
+function slope(key: string, knee: number, slopeLength: number, towards: Vec2) {
   const w = wallById(ogWalls, key);
-  w.slope = { side: sideOf(w, towards), knee, mode: 'pitch', pitchDeg: 45 };
+  w.slope = { side: sideOf(w, towards), knee, mode: 'length', slopeLength, pitchDeg: 45 };
 }
-slope('og_w_schlaf_rechts', 1870, ogC.schlaf);
-slope('og_w_nische_aussen', 1970, ogC.nische);
-slope('og_w_buero_oben', 1670, ogC.buero);
+slope('og_w_schlaf_rechts', 1150, 1870, ogC.schlaf);
+slope('og_w_nische_aussen', 1030, 1970, ogC.nische);
+slope('og_w_buero_oben', 1050, 1670, ogC.buero);
 
 function door(walls: Wall[], key: string, offset: number, into: Vec2, hinge: 'a' | 'b' = 'a', width = 885, type: Opening['type'] = 'door'): Opening {
   const w = wallById(walls, key);
@@ -101,11 +102,6 @@ const ogOpenings: Opening[] = [
   door(ogWalls, 'og_w_flur_buero', 1850, ogC.buero, 'b'),
   door(ogWalls, 'og_w_treppe_bad', 3640, ogC.bad, 'b', 760),
   windowO(ogWalls, 'og_w_schlaf_unten', 2700, ogC.schlaf),
-  // Fenster in Kniestockwänden: Oberkante unter dem Schrägenansatz
-  windowO(ogWalls, 'og_w_schlaf_rechts', 2300, ogC.schlaf, 1260, 1100, 700),
-  windowO(ogWalls, 'og_w_nische_aussen', 1255, ogC.nische, 1010, 1100, 800),
-  windowO(ogWalls, 'og_w_buero_oben', 1100, ogC.buero, 1260, 1050, 500),
-  windowO(ogWalls, 'og_w_buero_oben', 5800, ogC.buero, 1260, 1050, 500),
   windowO(ogWalls, 'og_w_buero_links', 2900, ogC.buero),
   windowO(ogWalls, 'og_w_bad_rechts', 1460, ogC.bad, 760, 1010, 1300),
   windowO(ogWalls, 'og_w_flur_aussen', 1800, ogC.flur),
@@ -140,7 +136,12 @@ const og: Level = {
   },
   walls: ogWalls,
   openings: ogOpenings,
-  roofWindows: [],
+  // Dachfenster in den Schrägen (Kniestockwände sind zu niedrig für Wandfenster)
+  roofWindows: [
+    { id: 'og_rw_buero1', wallId: 'og_w_buero_oben', offset: 1700, width: 780, length: 1180, bottomHeight: 1150 },
+    { id: 'og_rw_buero2', wallId: 'og_w_buero_oben', offset: 5200, width: 780, length: 1180, bottomHeight: 1150 },
+    { id: 'og_rw_schlaf', wallId: 'og_w_schlaf_rechts', offset: 2300, width: 780, length: 1400, bottomHeight: 1250 },
+  ],
   stairs: [
     {
       id: 'og_treppe',
@@ -179,9 +180,9 @@ const og: Level = {
   F.push(newFurniture('waschbecken', 8000, 4225, { name: 'Waschbecken (Beispiel)', width: 600, depth: 470, rotation: 0 }));
 }
 
-given('Dachschrägen laut Angabe: Schlafzimmer rechts Kniestock 1,87 m, links (Nische) 1,97 m, Büro an der oberen Wand 1,67 m; Bad und Flur ohne Schräge.', OG);
-assume('Dachneigung 45° für alle Schrägen.', OG);
-assume('Flache Decke im OG bei 2,50 m (die Schrägen laufen bis zu dieser Höhe).', OG, 'level:og.ceilingHeight');
+given('Schrägen beginnen laut Angabe bei: Schlafzimmer rechts 1,15 m, links (Nische) 1,03 m, Büro an der oberen Wand 1,05 m; Bad und Flur ohne Schräge.', OG);
+assume('Werte 1,87 / 1,97 / 1,67 m als Länge der Schräge gedeutet (entlang der Schräge bis zur flachen Decke). Daraus Neigung ca. 46° / 48° / 60°. Falls es die waagrechte Tiefe ist: Wand anklicken → „Tiefe der Schräge“.', OG);
+assume('Flache Decke im OG bei 2,50 m (die Schrägen laufen bis zu dieser Höhe; bestimmt auch die Neigung).', OG, 'level:og.ceilingHeight');
 assume('Beide Skizzen gleich ausgerichtet angenommen und für die Darstellung um 90° gedreht (Büro oben, Bad rechts, Schlafzimmer unten).', OG);
 assume('Lage OG über EG: linke Außenwand bündig, Treppenloch über dem Flur EG (OG dafür um 43 cm versetzt) – bitte prüfen; korrigierbar unter Eigenschaften → „Ebene verschieben/drehen“.', OG);
 assume('Außenwände 30 cm stark.', OG);
@@ -190,7 +191,7 @@ assume('Bad-Maße 2,69 × 2,29 m abgeleitet (nicht in der Skizze bemaßt).', OG,
 assume('Büro ragt 1,28 m über die Flurwand hinaus (6,38 m statt 5,10 m), Unterkante bündig mit Bad.', OG, 'room:r_buero');
 given('Alle Wände bleiben (Bestand). Neue Trockenbauwände werden selbst eingezeichnet (Werkzeug „Wand“, Typ „Neu (Trockenbau)“).', OG);
 assume('Türbreiten 88,5 cm (Bad 76 cm), Höhe 2,01 m, Aufschlag in den Raum.', OG);
-assume('Fenster: nicht in der Skizze – Positionen und Größen geschätzt (in den Kniestockwänden unterhalb des Schrägenansatzes).', OG);
+assume('Fenster und Dachfenster: nicht in der Skizze – Positionen und Größen geschätzt (Dachfenster 78 × 118/140 cm in den Schrägen).', OG);
 assume('Treppe: 15 Steigungen, Treppenloch 2,98 × 1,22 m, Austritt am Podest vor dem Büro.', OG, 'stair:og_treppe');
 assume('Geschosshöhe EG→OG 2,75 m (2,50 m Raumhöhe + 25 cm Decke).', OG, 'level:og.elevation');
 assume('Möbel im Startprojekt sind Beispiele.', OG);

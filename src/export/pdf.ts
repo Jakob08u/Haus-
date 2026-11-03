@@ -7,6 +7,7 @@ import { checkLevel } from '../checks/checks';
 import { chooseScale, drawPlan, planBounds } from './drawPlan';
 import { ELEC_INFO, LINE_INFO, CATEGORY_INFO } from '../model/defaults';
 import { lineLength } from '../ui/panels/ElectricPanel';
+import { slopePitch } from '../geometry/ceiling';
 
 export interface PdfOptions {
   levelIds: string[];
@@ -346,7 +347,7 @@ function planPage(D: Doc, levelId: string, mode: 'grundriss' | 'elektro') {
       d.text('Dachschrägen:', lx, ly);
       ly += 4;
       for (const w of kneeWalls) {
-        const t = d.splitTextToSize(`${w.label ?? 'Wand'}: Kniestock ${(w.slope!.knee / 10).toFixed(0)} cm, ${w.slope!.pitchDeg}°`, legendW);
+        const t = d.splitTextToSize(`${w.label ?? 'Wand'}: Kniestock ${(w.slope!.knee / 10).toFixed(0)} cm, ${slopePitch(w.slope!, l.ceilingHeight).toFixed(0)}°`, legendW);
         for (const tl of t) {
           d.text(tl, lx, ly);
           ly += 3.5;

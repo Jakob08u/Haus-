@@ -12,9 +12,18 @@ export interface Slope {
   side: 1 | -1;
   /** Kniestockhöhe an der Wandinnenseite */
   knee: number;
-  mode: 'pitch' | 'ridge';
+  /**
+   * Wie die Neigung angegeben ist:
+   * pitch = Winkel · ridge = Firsthöhe + Abstand · length = Länge der Schräge (entlang der Schräge
+   * bis zur flachen Decke) · depth = waagrechte Tiefe der Schräge bis zur flachen Decke
+   */
+  mode: 'pitch' | 'ridge' | 'length' | 'depth';
   /** Dachneigung in Grad (mode = pitch) */
   pitchDeg: number;
+  /** Länge der Schräge entlang der Fläche (mode = length) */
+  slopeLength?: number;
+  /** waagrechte Tiefe der Schräge (mode = depth) */
+  slopeDepth?: number;
   /** Firsthöhe über Fußboden (mode = ridge) */
   ridgeHeight?: number;
   /** waagrechter Abstand Wandinnenseite → First (mode = ridge) */

@@ -12,6 +12,7 @@ import { ElecGlyph, FurnitureGlyph } from './symbols';
 import { dockFurniture, furnitureWallDistances, furniturePolys } from './geom2d';
 import { checkLevelCached, clearanceZones } from '../checks/checks';
 import { verticalZones } from '../checks/zones';
+import { slopePitch } from '../geometry/ceiling';
 import { locateOnWall } from '../checks/zones';
 import { roomStats } from '../calc/roomStats';
 
@@ -824,7 +825,7 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
                     if (ang > 90 || ang < -90) ang += 180;
                     return (
                       <text key={'kn' + w.id} x={m.x} y={m.y} fontSize={fontPx(11)} fill="#1d4ed8" textAnchor="middle" dominantBaseline="middle" transform={`rotate(${ang} ${m.x} ${m.y})`} style={{ pointerEvents: 'none' }}>
-                        Kniestock {fmtCm(w.slope!.knee)} cm · {Math.round(w.slope!.mode === 'pitch' ? w.slope!.pitchDeg : 0) || ''}{w.slope!.mode === 'pitch' ? '°' : 'First'}
+                        Kniestock {fmtCm(w.slope!.knee)} cm · {Math.round(slopePitch(w.slope!, level.ceilingHeight))}°
                       </text>
                     );
                   })}
