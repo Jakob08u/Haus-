@@ -132,7 +132,7 @@ Alle Annahmen stehen im Tab **Annahmen** und sind im Editor violett markiert. Di
    | Flur | keine Schräge | – | 2,48 m | – |
    | Bad | keine Schräge | – | 2,63 m | – |
 
-   Bad OG laut deiner Skizze „Badezimmer 2“: Tür 94 cm, Dusche 89 × 89, Element 155 × 85 (Höhe 68 cm), WC auf 17-cm-Podest, Heizkörper 1 m. Offen: Gesamtbreite des Bads (laut Skizze ca. 3,32 m, im Grundriss nur 2,29 m) und die WC-Nische (63 cm).
+   Bad OG laut deiner Skizze „Badezimmer 2“: Tür 94 cm, Dusche 89 × 89, gemauerter Kasten 155 × 85 (Höhe 68 cm), WC auf 17-cm-Podest in einer 63 cm tiefen Nische Richtung Schlafzimmer, Heizkörper 1 m.
    Erdgeschoss: Decke auf 2,60 m abgehängt. Die 1,87 / 1,97 / 1,67 m sind als waagrechte Tiefe gedeutet – als Länge entlang der Schräge wären sie im Büro (Anstieg 1,74 m) zu kurz. Umstellbar: Wand anklicken → „Angabe über“. Deckenhöhe je Raum: Raum anklicken → „Deckenhöhe (Raum)“.
    Geschosshöhe EG → OG angenommen 3,00 m (2,60 m + Abhängung + Decke), Treppe 16 Steigungen.
    **Fenster und Dachfenster** setzt du selbst: Werkzeug „Fenster“ bzw. „Dachf.“, Größe oben in der Leiste wählen (Standardgrößen oder eigene Maße). Ein Fenster lässt sich in den Eigenschaften in ein Dachfenster umwandeln (und zurück). „Passt alles?“ meldet Fenster, die über den Kniestock ragen, und Dachfenster, die nicht in die Schräge passen.
@@ -142,9 +142,11 @@ Alle Annahmen stehen im Tab **Annahmen** und sind im Editor violett markiert. Di
 5. **Wandstärken:**
    - außen 30 cm
    - innen im OG nach den Laibungsmaßen der Vinyl-Rechnung: Schlaf/Flur 20 cm, Flur/Büro 30 cm
-   - Treppe/Bad 24 cm (aus 2,57 m und 2,29 m)
-   - Schlaf/Bad 15 cm
-6. **Bad OG:** 2,69 × 2,29 m, abgeleitet.
+   - Treppe/Bad 24 cm, Schlaf/Bad 24 cm
+6. **Bad OG:** 3,32 × 2,60 m aus deiner Skizze (89 + 157 + 86 cm bzw. 94 + 77 + 89 cm), dazu die WC-Nische 73 × 63 cm.
+   Laut Gesamtgrundriss ist dort nur 2,29 m Platz. Deshalb ist das Bad nach außen verlängert: Die Außenwand springt am Bad ca. 1 m vor.
+   Die rechte Seite der Skizze ergibt 3,01 m statt 2,60 m. Der Heizkörper hängt deshalb über dem Podest (Unterkante 25 cm).
+   Die rote Markierung an der Außenwand ist ignoriert.
 7. **Büro:** ragt 1,28 m über die Flurwand hinaus.
 8. **Wände:** Alle Wände bleiben (Bestand, deine Angabe). Neue Trockenbauwände zeichnest du selbst ein.
 9. **Beispiele:** Möbel, Elektro und Oberflächen im Startprojekt sind Beispiele, frei löschbar.

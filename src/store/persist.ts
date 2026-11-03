@@ -3,7 +3,7 @@ import type { Project } from '../model/types';
 import { useStore } from './store';
 import { migrate } from '../model/migrate';
 
-const KEY = 'raumplaner-projekt-v6';
+const KEY = 'raumplaner-projekt-v7';
 
 export async function loadInitialProject(): Promise<Project> {
   try {

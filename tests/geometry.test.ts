@@ -136,6 +136,26 @@ describe('Wohnfläche nach WoFlV mit Dachschräge', () => {
     expect(cm.heightAt({ x: 3000, y: 2000 })).toBeCloseTo(2800, 0);
   });
 
+  it('Schräge reicht nicht in einen Raum hinter der Wand (z. B. vorspringendes Bad)', () => {
+    const lvl = boxLevel(4000, 3000, 200, { ceilingHeight: 2500 });
+    lvl.walls.push(
+      { id: 'top2', a: { x: 4100, y: -100 }, b: { x: 6100, y: -100 }, thickness: 200, type: 'bestand' },
+      { id: 'right2', a: { x: 6100, y: -100 }, b: { x: 6100, y: 3100 }, thickness: 200, type: 'bestand' },
+      { id: 'bottom2', a: { x: 6100, y: 3100 }, b: { x: 4100, y: 3100 }, thickness: 200, type: 'bestand' },
+    );
+    lvl.rooms.push({ id: 'r2', name: 'Hinten', seed: { x: 5000, y: 1500 } });
+    lvl.walls.find((w) => w.id === 'right')!.slope = { side: 1, knee: 1000, mode: 'pitch', pitchDeg: 45 };
+    const cm = new CeilingModel(lvl);
+    expect(cm.heightAt({ x: 3990, y: 1500 })).toBeCloseTo(1010, 0);
+    expect(cm.heightAt({ x: 4210, y: 1500 })).toBeCloseTo(2500, 0);
+    const hinten = detectRooms(lvl).find((r) => r.name === 'Hinten')!;
+    expect(cm.livingArea(hinten.net).minHeight).toBeCloseTo(2500, 0);
+    // ohne Raum dahinter läuft die Schräge über die Wand bis zur Außenseite
+    const solo = boxLevel(4000, 3000, 200, { ceilingHeight: 2500 });
+    solo.walls.find((w) => w.id === 'right')!.slope = { side: 1, knee: 1000, mode: 'pitch', pitchDeg: 45 };
+    expect(new CeilingModel(solo).heightAt({ x: 4200, y: 1500 })).toBeCloseTo(800, 0);
+  });
+
   it('zwei Schrägen (Satteldach) überlagern sich korrekt', () => {
     const lvl = boxLevel(4000, 5000, 200, { ceilingHeight: 5000 });
     for (const id of ['left', 'right']) {
@@ -156,7 +176,7 @@ describe('Wohnfläche nach WoFlV mit Dachschräge', () => {
     const og = project.levels.find((l) => l.id === 'og')!;
     const eg = project.levels.find((l) => l.id === 'eg')!;
     const knee = Object.fromEntries(og.walls.filter((w) => w.slope).map((w) => [w.id, w.slope!.knee]));
-    expect(knee).toEqual({ og_w_schlaf_rechts: 1150, og_w_nische_aussen: 1030, og_w_buero_oben: 1050 });
+    expect(knee).toEqual({ og_w_schlaf_rechts: 1150, og_w_schlaf_rechts_t1: 1150, og_w_nische_aussen: 1030, og_w_buero_oben: 1050 });
     expect(og.elevation).toBeGreaterThanOrEqual(eg.elevation + eg.ceilingHeight + og.slabThickness);
     expect(eg.ceilingHeight).toBe(2600);
     const cm = new CeilingModel(og);
@@ -165,6 +185,9 @@ describe('Wohnfläche nach WoFlV mit Dachschräge', () => {
     expect(rooms['Schlafzimmer'].la.minHeight).toBeCloseTo(1030, 0);
     // Deckenhöhen je Raum laut Angabe
     expect(rooms['Bad'].la.maxHeight).toBeCloseTo(2630, 0);
+    // Bad laut Skizze 3,32 × 2,60 m + WC-Nische 0,73 × 0,63 m; die Schräge des Schlafzimmers reicht nicht hinein
+    expect(m2(rooms['Bad'].la.total)).toBeCloseTo(3.32 * 2.6 + 0.73 * 0.63, 2);
+    expect(rooms['Bad'].la.minHeight).toBeCloseTo(2630, 0);
     expect(rooms['Flur OG'].la.minHeight).toBeCloseTo(2480, 0);
     expect(rooms['Büro'].la.maxHeight).toBeCloseTo(2790, 0);
     expect(rooms['Schlafzimmer'].la.maxHeight).toBeCloseTo(2720, 0);

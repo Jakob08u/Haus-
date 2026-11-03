@@ -820,6 +820,17 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
               {layers.schraegen &&
                 level.walls
                   .filter((w) => w.slope)
+                  // geteilte Wand: Beschriftung nur am längsten Stück mit gleicher Schräge
+                  .filter((w, _i, all) => {
+                    const L = dist(w.a, w.b);
+                    const d = norm(sub(w.b, w.a));
+                    return !all.some((o) => {
+                      if (o === w || o.slope!.knee !== w.slope!.knee || dist(o.a, o.b) <= L) return false;
+                      const od = norm(sub(o.b, o.a));
+                      const touches = [o.a, o.b].some((p) => dist(p, w.a) < 3 || dist(p, w.b) < 3);
+                      return touches && Math.abs(d.x * od.y - d.y * od.x) < 0.02;
+                    });
+                  })
                   .map((w) => {
                     const d = norm(sub(w.b, w.a));
                     const n = mul(perp(d), w.slope!.side);

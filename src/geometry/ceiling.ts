@@ -1,6 +1,6 @@
 import type { Level, Slope, Vec2, Wall } from '../model/types';
 import { clipHalfPlane, triangulate, type Multi, type Ring } from './polygon';
-import { polygonArea, polygonCentroid, sub, dot, norm, perp, dist, bbox, pointInPolygon, pointSegDist } from './vec';
+import { polygonArea, polygonCentroid, add, mul, sub, norm, perp, dist, bbox, pointInPolygon, pointSegDist } from './vec';
 import { plannedWalls, detectRooms, interiorPoint, type DetectedRoom } from './rooms';
 
 /** Affine Höhenfunktion h(p) = ax*x + ay*y + c (mm) */
@@ -24,9 +24,11 @@ export interface SlopePlane {
  * die halbe Wandstärke, damit die Ecke abgedeckt ist. Läuft die Außenwand in gleicher Richtung weiter
  * (anderer Raum, eigene oder keine Schräge), endet die Schräge genau am Knoten.
  */
-function endExtension(w: Wall, end: 'a' | 'b', walls: Wall[]): number {
+function endExtension(w: Wall, end: 'a' | 'b', walls: Wall[], occupied?: (p: Vec2) => boolean): number {
   const p = w[end];
   const d = norm(sub(w.b, w.a));
+  const out = end === 'a' ? -1 : 1;
+  const inn = mul(perp(d), w.slope?.side ?? 1);
   let ext = 0;
   for (const o of walls) {
     if (o.id === w.id) continue;
@@ -36,7 +38,13 @@ function endExtension(w: Wall, end: 'a' | 'b', walls: Wall[]): number {
     const od = norm(sub(o.b, o.a));
     const collinear = Math.abs(d.x * od.y - d.y * od.x) < 0.02;
     if (collinear && atEnd) return 0; // Fortsetzung der Wand → Schräge endet am Knoten
-    if (!collinear) ext = Math.max(ext, o.thickness / 2 + 1);
+    if (!collinear) {
+      // Liegt hinter der Querwand ein anderer Raum, endet die Schräge kurz vor deren Rückseite
+      const beyond = [0, w.thickness / 2 + 100].some((t) =>
+        occupied?.(add(add(p, mul(d, out * (o.thickness / 2 + 50))), mul(inn, t))),
+      );
+      ext = Math.max(ext, o.thickness / 2 + (beyond ? -1 : 1));
+    }
   }
   return ext;
 }
@@ -63,7 +71,12 @@ export function slopePitch(s: Slope, ceilingHeight = 2500): number {
  * Schrägen-Ebenen. heightFor liefert die flache Deckenhöhe im Raum vor der Wand
  * (nötig, wenn die Neigung über Länge/Tiefe der Schräge angegeben ist).
  */
-export function slopePlanes(walls: Wall[], heightFor: number | ((probe: Vec2) => number) = 2500): SlopePlane[] {
+export function slopePlanes(
+  walls: Wall[],
+  heightFor: number | ((probe: Vec2) => number) = 2500,
+  /** liegt p in einem Raum? (dann reicht die Schräge nicht bis auf die Rückseite der Wand) */
+  occupied?: (p: Vec2) => boolean,
+): SlopePlane[] {
   const planes: SlopePlane[] = [];
   for (const w of walls) {
     if (!w.slope) continue;
@@ -82,12 +95,16 @@ export function slopePlanes(walls: Wall[], heightFor: number | ((probe: Vec2) =>
     const tan = Math.tan((pitch * Math.PI) / 180);
     // h = knee + tan * (inn·(p - innerA))
     const fn: Affine = { ax: tan * inn.x, ay: tan * inn.y, c: w.slope.knee - tan * (inn.x * innerA.x + inn.y * innerA.y) };
+    // Außenwand: Schräge deckt die Wand bis zur Außenseite; grenzt hinten ein Raum an, endet sie kurz davor
+    const backOccupied = [0.1, 0.3, 0.5, 0.7, 0.9].some((t) =>
+      occupied?.({ x: w.a.x + d.x * L * t - inn.x * (half + 50), y: w.a.y + d.y * L * t - inn.y * (half + 50) }),
+    );
     const domain = [
       // Innenseite inkl. der Wand selbst
-      { nx: inn.x, ny: inn.y, c: -(inn.x * innerA.x + inn.y * innerA.y) + w.thickness + 1 },
+      { nx: inn.x, ny: inn.y, c: -(inn.x * innerA.x + inn.y * innerA.y) + w.thickness + (backOccupied ? -1 : 1) },
       // Streifen entlang der Wand
-      { nx: d.x, ny: d.y, c: -(d.x * w.a.x + d.y * w.a.y) + endExtension(w, 'a', walls) },
-      { nx: -d.x, ny: -d.y, c: d.x * w.a.x + d.y * w.a.y + L + endExtension(w, 'b', walls) },
+      { nx: d.x, ny: d.y, c: -(d.x * w.a.x + d.y * w.a.y) + endExtension(w, 'a', walls, occupied) },
+      { nx: -d.x, ny: -d.y, c: d.x * w.a.x + d.y * w.a.y + L + endExtension(w, 'b', walls, occupied) },
     ];
     planes.push({ wallId: w.id, fn, domain, knee: w.slope.knee, pitchDeg: pitch, innerA, innerB, side: s });
   }
@@ -106,7 +123,7 @@ export class CeilingModel {
     this.H = level.ceilingHeight;
     const rs = detected ?? detectRooms(level);
     this.rooms = rs.map((r) => ({ clear: r.clear, H: r.meta?.ceilingHeight ?? level.ceilingHeight, bb: bbox(r.clear.flatMap((p) => p[0])) }));
-    this.planes = slopePlanes(plannedWalls(level), (p) => this.roomHeightAt(p) ?? this.H);
+    this.planes = slopePlanes(plannedWalls(level), (p) => this.roomHeightAt(p) ?? this.H, (p) => this.roomHeightAt(p) != null);
   }
 
   /** flache Deckenhöhe des Raums, in dem p liegt */

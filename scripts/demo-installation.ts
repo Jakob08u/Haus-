@@ -56,9 +56,9 @@ export function seedDemoElectrical(og: Level, _toUser: (p: Vec2) => Vec2) {
   line('strom', 'wand', [[5400, 8305, 300], [6400, 8305, 300]], 'Steckdosen Bett');
 
   // Bad (Türwand X = 6660, Wand zum Büro Y = 3990)
-  const bad = { x: 7800, y: 5300 };
+  const bad = { x: 8320, y: 5290 };
   onWall('og_w_treppe_bad', 8190 - 5130, bad, 'schalter', 1050, { label: 'Licht Bad' });
-  ceiling(7800, 5300, 'lampe', 'Bad', 2630);
+  ceiling(8320, 5290, 'lampe', 'Bad', 2630);
 
   // Flur
   ceiling(4500, 5600, 'lampe', 'Flur', 2480);
