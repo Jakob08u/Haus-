@@ -130,8 +130,9 @@ Alle Annahmen stehen im Tab **Annahmen** und sind im Editor violett markiert. Di
    | Schlafzimmer links (Nische) | 1,03 m | 1,97 m | 2,72 m | ca. 41° |
    | Büro oben | 1,05 m | 1,67 m | 2,79 m | ca. 46° |
    | Flur | keine Schräge | – | 2,48 m | – |
-   | Bad | keine Schräge | – | 2,48 m (angenommen wie Flur) | – |
+   | Bad | keine Schräge | – | 2,63 m | – |
 
+   Bad OG laut deiner Skizze „Badezimmer 2“: Tür 94 cm, Dusche 89 × 89, Element 155 × 85 (Höhe 68 cm), WC auf 17-cm-Podest, Heizkörper 1 m. Offen: Gesamtbreite des Bads (laut Skizze ca. 3,32 m, im Grundriss nur 2,29 m) und die WC-Nische (63 cm).
    Erdgeschoss: Decke auf 2,60 m abgehängt. Die 1,87 / 1,97 / 1,67 m sind als waagrechte Tiefe gedeutet – als Länge entlang der Schräge wären sie im Büro (Anstieg 1,74 m) zu kurz. Umstellbar: Wand anklicken → „Angabe über“. Deckenhöhe je Raum: Raum anklicken → „Deckenhöhe (Raum)“.
    Geschosshöhe EG → OG angenommen 3,00 m (2,60 m + Abhängung + Decke), Treppe 16 Steigungen.
    **Fenster und Dachfenster** setzt du selbst: Werkzeug „Fenster“ bzw. „Dachf.“, Größe oben in der Leiste wählen (Standardgrößen oder eigene Maße). Ein Fenster lässt sich in den Eigenschaften in ein Dachfenster umwandeln (und zurück). „Passt alles?“ meldet Fenster, die über den Kniestock ragen, und Dachfenster, die nicht in die Schräge passen.

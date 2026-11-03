@@ -1,8 +1,8 @@
 {
  "version": 1,
  "name": "Haus Umbau",
- "createdAt": "2026-11-03T14:43:26.689Z",
- "updatedAt": "2026-11-03T14:43:26.689Z",
+ "createdAt": "2026-11-03T14:58:09.060Z",
+ "updatedAt": "2026-11-03T14:58:09.060Z",
  "levels": [
   {
    "id": "eg",
@@ -264,7 +264,7 @@
    ],
    "openings": [
     {
-     "id": "o20",
+     "id": "o21",
      "type": "door",
      "wallId": "eg_w_mittelwand",
      "offset": 1990,
@@ -275,7 +275,7 @@
      "swing": -1
     },
     {
-     "id": "o21",
+     "id": "o22",
      "type": "passage",
      "wallId": "eg_w_mittelwand",
      "offset": 3885,
@@ -286,7 +286,7 @@
      "swing": -1
     },
     {
-     "id": "o22",
+     "id": "o23",
      "type": "passage",
      "wallId": "eg_w_mittelwand",
      "offset": 6730,
@@ -297,7 +297,7 @@
      "swing": -1
     },
     {
-     "id": "o23",
+     "id": "o24",
      "type": "door",
      "wallId": "eg_w_flur_wohn",
      "offset": 1375,
@@ -308,7 +308,7 @@
      "swing": -1
     },
     {
-     "id": "o24",
+     "id": "o25",
      "type": "door",
      "wallId": "eg_w_flur_gaeste",
      "offset": 900,
@@ -319,7 +319,7 @@
      "swing": 1
     },
     {
-     "id": "o25",
+     "id": "o26",
      "type": "door",
      "wallId": "eg_w_flur_gaeste",
      "offset": 6350,
@@ -330,7 +330,7 @@
      "swing": 1
     },
     {
-     "id": "o26",
+     "id": "o27",
      "type": "passage",
      "wallId": "eg_w_kueche_vorraum",
      "offset": 1050,
@@ -341,7 +341,7 @@
      "swing": 1
     },
     {
-     "id": "o27",
+     "id": "o28",
      "type": "door",
      "wallId": "eg_w_vorraum_oben",
      "offset": 1050,
@@ -846,7 +846,7 @@
      "type": "door",
      "wallId": "og_w_treppe_bad_t1",
      "offset": 2205,
-     "width": 760,
+     "width": 940,
      "height": 2010,
      "sill": 0,
      "hinge": "b",
@@ -911,6 +911,7 @@
       "y": 5885
      },
      "usage": "Bad",
+     "ceilingHeight": 2630,
      "floor": {
       "materialId": "mat_fliese_grau",
       "pattern": "half",
@@ -935,7 +936,7 @@
    ],
    "furniture": [
     {
-     "id": "f_mw0ssk74kth91",
+     "id": "f_mw0tbh1gth711",
      "name": "Bett 160×200 (Beispiel)",
      "category": "bett",
      "x": 9120,
@@ -949,7 +950,7 @@
      "connections": []
     },
     {
-     "id": "f_mw0ssk74p0lm2",
+     "id": "f_mw0tbh1g819o2",
      "name": "Nachttisch (Beispiel)",
      "category": "kommode",
      "x": 10620,
@@ -963,7 +964,7 @@
      "connections": []
     },
     {
-     "id": "f_mw0ssk74jg7a3",
+     "id": "f_mw0tbh1g4nwn3",
      "name": "Kleiderschrank (Beispiel)",
      "category": "schrank",
      "x": 5770,
@@ -979,7 +980,7 @@
      "connections": []
     },
     {
-     "id": "f_mw0ssk740wck4",
+     "id": "f_mw0tbh1g19u24",
      "name": "Kommode (Beispiel)",
      "category": "kommode",
      "x": 4020,
@@ -993,7 +994,7 @@
      "connections": []
     },
     {
-     "id": "f_mw0ssk74jz4h5",
+     "id": "f_mw0tbh1gn2ne5",
      "name": "Schreibtisch (Beispiel)",
      "category": "schreibtisch",
      "x": 8220,
@@ -1007,7 +1008,7 @@
      "connections": []
     },
     {
-     "id": "f_mw0ssk74zvlm6",
+     "id": "f_mw0tbh1gtolk6",
      "name": "Bürostuhl (Beispiel)",
      "category": "stuhl",
      "x": 8220,
@@ -1021,7 +1022,7 @@
      "connections": []
     },
     {
-     "id": "f_mw0ssk74gfvx7",
+     "id": "f_mw0tbh1gnhmu7",
      "name": "Regal (Beispiel)",
      "category": "regal",
      "x": 5940,
@@ -1035,15 +1036,15 @@
      "connections": []
     },
     {
-     "id": "f_mw0ssk748m2q8",
-     "name": "Dusche 90×90 (Beispiel)",
+     "id": "f_mw0tbh1gg32k8",
+     "name": "Dusche 89 × 89",
      "category": "dusche",
-     "x": 10330,
-     "y": 6780,
+     "x": 10325,
+     "y": 6785,
      "elevation": 0,
-     "rotation": 180,
-     "width": 900,
-     "depth": 900,
+     "rotation": 270,
+     "width": 890,
+     "depth": 890,
      "height": 2000,
      "color": "#dfe9ef",
      "connections": [
@@ -1056,25 +1057,72 @@
       {
        "kind": "wasser_kalt",
        "x": -80,
-       "y": -450,
+       "y": -445,
        "z": 1100
       },
       {
        "kind": "wasser_warm",
        "x": 80,
-       "y": -450,
+       "y": -445,
        "z": 1100
       }
      ]
     },
     {
-     "id": "f_mw0ssk74zi7d9",
-     "name": "WC (Beispiel)",
-     "category": "wc",
-     "x": 11890,
-     "y": 5250,
+     "id": "f_mw0tbh1geamy9",
+     "name": "Wanne/Kasten 155 × 85 (Höhe 68 cm)",
+     "category": "wanne",
+     "x": 11395,
+     "y": 4965,
      "elevation": 0,
-     "rotation": 90,
+     "rotation": 0,
+     "width": 1550,
+     "depth": 850,
+     "height": 680,
+     "color": "#ffffff",
+     "connections": [
+      {
+       "kind": "abwasser",
+       "x": -575,
+       "y": 0,
+       "z": 0
+      },
+      {
+       "kind": "wasser_kalt",
+       "x": -675,
+       "y": -425,
+       "z": 700
+      },
+      {
+       "kind": "wasser_warm",
+       "x": -575,
+       "y": -425,
+       "z": 700
+      }
+     ]
+    },
+    {
+     "id": "f_mw0tbh1hngjd10",
+     "name": "Podest WC (17 cm)",
+     "category": "sonstiges",
+     "x": 11740,
+     "y": 6875,
+     "elevation": 0,
+     "rotation": 0,
+     "width": 860,
+     "depth": 710,
+     "height": 170,
+     "color": "#d9d4cc",
+     "connections": []
+    },
+    {
+     "id": "f_mw0tbh1hcinx11",
+     "name": "WC auf Podest",
+     "category": "wc",
+     "x": 11740,
+     "y": 6950,
+     "elevation": 170,
+     "rotation": 180,
      "width": 380,
      "depth": 560,
      "height": 400,
@@ -1095,40 +1143,34 @@
      ]
     },
     {
-     "id": "f_mw0ssk748a7p10",
-     "name": "Waschbecken (Beispiel)",
-     "category": "waschbecken",
-     "x": 11220,
-     "y": 4775,
-     "elevation": 0,
-     "rotation": 0,
-     "width": 600,
-     "depth": 470,
-     "height": 850,
-     "color": "#ffffff",
+     "id": "f_mw0tbh1hhnwm12",
+     "name": "Heizkörper 1 m",
+     "category": "heizkoerper",
+     "x": 12120,
+     "y": 6010,
+     "elevation": 150,
+     "rotation": 90,
+     "width": 1000,
+     "depth": 100,
+     "height": 600,
+     "color": "#f0f0f0",
      "connections": [
       {
-       "kind": "abwasser",
-       "x": 0,
-       "y": -235,
-       "z": 550
+       "kind": "heizung",
+       "x": -450,
+       "y": 0,
+       "z": 70
       },
       {
-       "kind": "wasser_kalt",
-       "x": -80,
-       "y": -235,
-       "z": 550
-      },
-      {
-       "kind": "wasser_warm",
-       "x": 80,
-       "y": -235,
-       "z": 550
+       "kind": "heizung",
+       "x": 450,
+       "y": 0,
+       "z": 70
       }
      ]
     },
     {
-     "id": "f_mw0ssk765g5y11",
+     "id": "f_mw0tbh1igncx13",
      "name": "Heizkörper (Beispiel)",
      "category": "heizkoerper",
      "x": 9620,
@@ -1272,27 +1314,15 @@
     },
     {
      "id": "e17",
-     "kind": "steckdose1",
-     "x": 11670,
-     "y": 4540,
-     "height": 1150,
-     "wallId": "og_w_flur_buero_t1",
-     "side": 1,
-     "rotation": 0,
-     "label": "Spiegel",
-     "aboveWorktop": true
-    },
-    {
-     "id": "e18",
      "kind": "lampe",
      "x": 11020,
      "y": 5850,
-     "height": 2480,
+     "height": 2630,
      "label": "Bad",
      "rotation": 0
     },
     {
-     "id": "e22",
+     "id": "e18",
      "kind": "lampe",
      "x": 7720,
      "y": 6150,
@@ -1301,7 +1331,7 @@
      "rotation": 0
     },
     {
-     "id": "e23",
+     "id": "e19",
      "kind": "rauchmelder",
      "x": 7720,
      "y": 7750,
@@ -1404,85 +1434,6 @@
        "z": 300
       }
      ]
-    },
-    {
-     "id": "l19",
-     "kind": "wasser_kalt",
-     "surface": "wand",
-     "label": "Kaltwasser Waschbecken",
-     "points": [
-      {
-       "x": 11140,
-       "y": 4555,
-       "z": 550
-      },
-      {
-       "x": 11140,
-       "y": 4555,
-       "z": 200
-      },
-      {
-       "x": 9920,
-       "y": 4555,
-       "z": 200
-      }
-     ]
-    },
-    {
-     "id": "l20",
-     "kind": "wasser_warm",
-     "surface": "wand",
-     "label": "Warmwasser Waschbecken",
-     "points": [
-      {
-       "x": 11300,
-       "y": 4555,
-       "z": 550
-      },
-      {
-       "x": 11300,
-       "y": 4555,
-       "z": 260
-      },
-      {
-       "x": 9920,
-       "y": 4555,
-       "z": 260
-      }
-     ]
-    },
-    {
-     "id": "l21",
-     "kind": "abwasser",
-     "surface": "wand",
-     "label": "Abwasser WB → WC-Strang",
-     "points": [
-      {
-       "x": 11220,
-       "y": 4555,
-       "z": 550
-      },
-      {
-       "x": 11220,
-       "y": 4555,
-       "z": 120
-      },
-      {
-       "x": 12155,
-       "y": 4555,
-       "z": 120
-      },
-      {
-       "x": 12155,
-       "y": 5250,
-       "z": 120
-      },
-      {
-       "x": 12155,
-       "y": 5250,
-       "z": 230
-      }
-     ]
     }
    ],
    "dimensions": []
@@ -1560,123 +1511,129 @@
   },
   {
    "id": "a7",
-   "text": "Bad OG: Deckenhöhe wie Flur (2,48 m) angenommen.",
+   "text": "Bad OG laut Skizze „Badezimmer 2“: Deckenhöhe 2,63 m, Tür 94 cm, Dusche 89 × 89 cm, Element 155 × 85 cm (Höhe 68 cm), WC auf 17 cm Podest (64 cm + 31 cm Schräge, 49 cm), Heizkörper 1 m an der Außenwand.",
+   "levelId": "og",
+   "ref": "room:r_bad_og",
+   "status": "bestaetigt"
+  },
+  {
+   "id": "a8",
+   "text": "Bad-Breite: laut Skizze 89 + 157 + ca. 86 cm ≈ 3,32 m, im Grundriss nur 2,29 m zwischen Treppenwand und Außenwand – Gesamtmaß Bad und WC-Nische (63 cm) noch offen. Abstand Dusche–Podest deshalb nur ca. 54 cm statt 157 cm; Heizkörper endet am Podest (Abstand zum Kasten 12 statt 45 cm).",
    "levelId": "og",
    "ref": "room:r_bad_og",
    "status": "offen"
   },
   {
-   "id": "a8",
-   "text": "Beide Skizzen gleich ausgerichtet angenommen und für die Darstellung um 90° gedreht (Büro oben, Bad rechts, Schlafzimmer unten).",
-   "levelId": "og",
-   "status": "offen"
-  },
-  {
    "id": "a9",
-   "text": "Lage OG über EG: linke Außenwand bündig, Treppenloch über dem Flur EG (OG dafür um 43 cm versetzt) – bitte prüfen; korrigierbar unter Eigenschaften → „Ebene verschieben/drehen“.",
+   "text": "Element 155 × 85 cm, Höhe 68 cm als Badewanne bzw. Kasten eingetragen.",
    "levelId": "og",
    "status": "offen"
   },
   {
    "id": "a10",
-   "text": "Außenwände 30 cm stark.",
+   "text": "Beide Skizzen gleich ausgerichtet angenommen und für die Darstellung um 90° gedreht (Büro oben, Bad rechts, Schlafzimmer unten).",
    "levelId": "og",
    "status": "offen"
   },
   {
    "id": "a11",
-   "text": "Wandstärken innen aus Laibungsmaßen der Vinyl-Rechnung abgeleitet: Schlaf/Flur 20 cm, Flur/Büro 30 cm; Treppe/Bad 24 cm (aus 2,57 m und 2,29 m); Schlaf/Bad 15 cm.",
+   "text": "Lage OG über EG: linke Außenwand bündig, Treppenloch über dem Flur EG (OG dafür um 43 cm versetzt) – bitte prüfen; korrigierbar unter Eigenschaften → „Ebene verschieben/drehen“.",
    "levelId": "og",
    "status": "offen"
   },
   {
    "id": "a12",
-   "text": "Bad-Maße 2,69 × 2,29 m abgeleitet (nicht in der Skizze bemaßt).",
+   "text": "Außenwände 30 cm stark.",
    "levelId": "og",
-   "ref": "room:r_bad_og",
    "status": "offen"
   },
   {
    "id": "a13",
+   "text": "Wandstärken innen aus Laibungsmaßen der Vinyl-Rechnung abgeleitet: Schlaf/Flur 20 cm, Flur/Büro 30 cm; Treppe/Bad 24 cm (aus 2,57 m und 2,29 m); Schlaf/Bad 15 cm.",
+   "levelId": "og",
+   "status": "offen"
+  },
+  {
+   "id": "a14",
    "text": "Büro ragt 1,28 m über die Flurwand hinaus (6,38 m statt 5,10 m), Unterkante bündig mit Bad.",
    "levelId": "og",
    "ref": "room:r_buero",
    "status": "offen"
   },
   {
-   "id": "a14",
+   "id": "a15",
    "text": "Alle Wände bleiben (Bestand). Neue Trockenbauwände werden selbst eingezeichnet (Werkzeug „Wand“, Typ „Neu (Trockenbau)“).",
    "levelId": "og",
    "status": "bestaetigt"
   },
   {
-   "id": "a15",
-   "text": "Türbreiten 88,5 cm (Bad 76 cm), Höhe 2,01 m, Aufschlag in den Raum.",
+   "id": "a16",
+   "text": "Türbreiten 88,5 cm (Bad 94 cm laut Skizze), Höhe 2,01 m, Aufschlag in den Raum.",
    "levelId": "og",
    "status": "offen"
   },
   {
-   "id": "a16",
+   "id": "a17",
    "text": "Fenster und Dachfenster werden selbst eingezeichnet (Werkzeuge „Fenster“ und „Dachf.“, Größe wählbar, umwandelbar).",
    "levelId": "og",
    "status": "bestaetigt"
   },
   {
-   "id": "a17",
+   "id": "a18",
    "text": "Treppe: 16 Steigungen (je ca. 18,8 cm), Treppenloch 2,98 × 1,22 m, Austritt am Podest vor dem Büro.",
    "levelId": "og",
    "ref": "stair:og_treppe",
    "status": "offen"
   },
   {
-   "id": "a18",
+   "id": "a19",
    "text": "Geschosshöhe EG→OG 3,00 m (2,60 m abgehängte Decke + ca. 15 cm Abhängung + 25 cm Decke).",
    "levelId": "og",
    "ref": "level:og.elevation",
    "status": "offen"
   },
   {
-   "id": "a19",
+   "id": "a20",
    "text": "Möbel im Startprojekt sind Beispiele.",
    "levelId": "og",
    "status": "offen"
   },
   {
-   "id": "a28",
+   "id": "a29",
    "text": "Treppe im EG ist in der Skizze nicht eingezeichnet – angenommen im Flur EG unter dem Treppenloch des OG, Antritt Richtung Gäste-WC/Wohnen.",
    "levelId": "eg",
    "ref": "stair:eg_treppe",
    "status": "offen"
   },
   {
-   "id": "a29",
+   "id": "a30",
    "text": "Außenwände EG 30 cm.",
    "levelId": "eg",
    "status": "offen"
   },
   {
-   "id": "a30",
+   "id": "a31",
    "text": "Schraffierte Mittelwand als 65 cm starke Bestandswand mit Öffnungen 90 cm (Laibung 60 cm), 1,25 m und 2,70 m.",
    "levelId": "eg",
    "ref": "wall:eg_w_mittelwand",
    "status": "offen"
   },
   {
-   "id": "a31",
+   "id": "a32",
    "text": "Essen 4,02 × 4,62 m (Skizze 4,63 m; 1 cm angeglichen); Nische 1,00 × 0,30 m nicht modelliert.",
    "levelId": "eg",
    "ref": "room:r_ess",
    "status": "offen"
   },
   {
-   "id": "a32",
+   "id": "a33",
    "text": "Bad EG 1,82 × 3,50 m abgeleitet; Wand Gäste/Bad 11,5 cm.",
    "levelId": "eg",
    "ref": "room:r_bad_eg",
    "status": "offen"
   },
   {
-   "id": "a33",
+   "id": "a34",
    "text": "Oberflächen (Fliesenspiegel Bad 1,20 m, Tapete hinter dem Bett, Farbe Büro) sind Beispiele.",
    "levelId": "og",
    "status": "offen"

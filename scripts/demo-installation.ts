@@ -58,11 +58,7 @@ export function seedDemoElectrical(og: Level, _toUser: (p: Vec2) => Vec2) {
   // Bad (Türwand X = 6660, Wand zum Büro Y = 3990)
   const bad = { x: 7800, y: 5300 };
   onWall('og_w_treppe_bad', 8190 - 5130, bad, 'schalter', 1050, { label: 'Licht Bad' });
-  onWall('og_w_flur_buero', 8450 - 3700, bad, 'steckdose1', 1150, { label: 'Spiegel', aboveWorktop: true });
-  ceiling(7800, 5300, 'lampe', 'Bad', 2480);
-  line('wasser_kalt', 'wand', [[7920, 4005, 550], [7920, 4005, 200], [6700, 4005, 200]], 'Kaltwasser Waschbecken');
-  line('wasser_warm', 'wand', [[8080, 4005, 550], [8080, 4005, 260], [6700, 4005, 260]], 'Warmwasser Waschbecken');
-  line('abwasser', 'wand', [[8000, 4005, 550], [8000, 4005, 120], [8935, 4005, 120], [8935, 4700, 120], [8935, 4700, 230]], 'Abwasser WB → WC-Strang');
+  ceiling(7800, 5300, 'lampe', 'Bad', 2630);
 
   // Flur
   ceiling(4500, 5600, 'lampe', 'Flur', 2480);

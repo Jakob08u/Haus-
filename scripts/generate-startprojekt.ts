@@ -101,13 +101,13 @@ function windowO(walls: Wall[], key: string, offset: number, into: Vec2, width =
 const ogOpenings: Opening[] = [
   door(ogWalls, 'og_w_schlaf_flur', 825, ogC.schlaf, 'a'),
   door(ogWalls, 'og_w_flur_buero', 1850, ogC.buero, 'b'),
-  door(ogWalls, 'og_w_treppe_bad', 3640, ogC.bad, 'b', 760),
+  door(ogWalls, 'og_w_treppe_bad', 3640, ogC.bad, 'b', 940),
 ];
 
 const ogRooms: RoomMeta[] = [
   { id: 'r_buero', name: 'Büro', seed: ogC.buero, usage: 'Büro', ceilingHeight: 2790, floor: { materialId: 'mat_vinyl_eiche', pattern: 'third', rotation: 0 } },
   { id: 'r_flur_og', name: 'Flur OG', seed: ogC.flur, usage: 'Flur', ceilingHeight: 2480, floor: { materialId: 'mat_vinyl_eiche', pattern: 'third', rotation: 0 } },
-  { id: 'r_bad_og', name: 'Bad', seed: ogC.bad, usage: 'Bad', floor: { materialId: 'mat_fliese_grau', pattern: 'half', rotation: 0 } },
+  { id: 'r_bad_og', name: 'Bad', seed: ogC.bad, usage: 'Bad', ceilingHeight: 2630, floor: { materialId: 'mat_fliese_grau', pattern: 'half', rotation: 0 } },
   { id: 'r_schlaf', name: 'Schlafzimmer', seed: ogC.schlaf, usage: 'Schlafen', ceilingHeight: 2720, floor: { materialId: 'mat_vinyl_eiche', pattern: 'third', rotation: 90 } },
 ];
 
@@ -167,23 +167,27 @@ const og: Level = {
   F.push(newFurniture('schreibtisch', 5000, 700, { name: 'Schreibtisch (Beispiel)', width: 1600, depth: 800, height: 740, rotation: 0 }));
   F.push(newFurniture('stuhl', 5000, 1350, { name: 'Bürostuhl (Beispiel)', width: 650, depth: 650, height: 1100, rotation: 180 }));
   F.push(newFurniture('regal', 2720, 2400, { name: 'Regal (Beispiel)', width: 800, depth: 300, height: 2000, rotation: 270 }));
-  F.push(newFurniture('dusche', 7110, 6230, { name: 'Dusche 90×90 (Beispiel)', rotation: 180 }));
-  F.push(newFurniture('wc', 8670, 4700, { name: 'WC (Beispiel)', rotation: 90 }));
-  F.push(newFurniture('waschbecken', 8000, 4225, { name: 'Waschbecken (Beispiel)', width: 600, depth: 470, rotation: 0 }));
+  // Bad laut Skizze „Badezimmer 2“ (Ecken wie gezeichnet; Bad innen X 6660–8950, Y 3990–6680)
+  F.push(newFurniture('dusche', 6660 + 445, 6680 - 445, { name: 'Dusche 89 × 89', width: 890, depth: 890, rotation: 270 }));
+  F.push(newFurniture('wanne', 8950 - 775, 3990 + 425, { name: 'Wanne/Kasten 155 × 85 (Höhe 68 cm)', width: 1550, depth: 850, height: 680, rotation: 0 }));
+  F.push(newFurniture('sonstiges', 8950 - 430, 6680 - 355, { name: 'Podest WC (17 cm)', width: 860, depth: 710, height: 170, color: '#d9d4cc', rotation: 0, connections: [] }));
+  F.push(newFurniture('wc', 8950 - 430, 6680 - 280, { name: 'WC auf Podest', elevation: 170, rotation: 180 }));
+  F.push(newFurniture('heizkoerper', 8950 - 50, 5960 - 500, { name: 'Heizkörper 1 m', width: 1000, depth: 100, height: 600, elevation: 150, rotation: 90 }));
 }
 
 given('Schrägen beginnen laut Angabe bei: Schlafzimmer rechts 1,15 m, links (Nische) 1,03 m, Büro an der oberen Wand 1,05 m; Bad und Flur ohne Schräge.', OG);
 given('Deckenhöhen OG laut Angabe: Flur 2,48 m, Büro 2,79 m, Schlafzimmer 2,72 m. EG: Decke auf 2,60 m abgehängt.', OG);
 assume('Werte 1,87 / 1,97 / 1,67 m als waagrechte Tiefe der Schräge bis zur flachen Decke gedeutet (als Länge entlang der Schräge passt es im Büro bei 2,79 m Decke nicht). Daraus Neigung ca. 40° (Schlafzimmer) und 46° (Büro).', OG);
-assume('Bad OG: Deckenhöhe wie Flur (2,48 m) angenommen.', OG, 'room:r_bad_og');
+given('Bad OG laut Skizze „Badezimmer 2“: Deckenhöhe 2,63 m, Tür 94 cm, Dusche 89 × 89 cm, Element 155 × 85 cm (Höhe 68 cm), WC auf 17 cm Podest (64 cm + 31 cm Schräge, 49 cm), Heizkörper 1 m an der Außenwand.', OG, 'room:r_bad_og');
+assume('Bad-Breite: laut Skizze 89 + 157 + ca. 86 cm ≈ 3,32 m, im Grundriss nur 2,29 m zwischen Treppenwand und Außenwand – Gesamtmaß Bad und WC-Nische (63 cm) noch offen. Abstand Dusche–Podest deshalb nur ca. 54 cm statt 157 cm; Heizkörper endet am Podest (Abstand zum Kasten 12 statt 45 cm).', OG, 'room:r_bad_og');
+assume('Element 155 × 85 cm, Höhe 68 cm als Badewanne bzw. Kasten eingetragen.', OG);
 assume('Beide Skizzen gleich ausgerichtet angenommen und für die Darstellung um 90° gedreht (Büro oben, Bad rechts, Schlafzimmer unten).', OG);
 assume('Lage OG über EG: linke Außenwand bündig, Treppenloch über dem Flur EG (OG dafür um 43 cm versetzt) – bitte prüfen; korrigierbar unter Eigenschaften → „Ebene verschieben/drehen“.', OG);
 assume('Außenwände 30 cm stark.', OG);
 assume('Wandstärken innen aus Laibungsmaßen der Vinyl-Rechnung abgeleitet: Schlaf/Flur 20 cm, Flur/Büro 30 cm; Treppe/Bad 24 cm (aus 2,57 m und 2,29 m); Schlaf/Bad 15 cm.', OG);
-assume('Bad-Maße 2,69 × 2,29 m abgeleitet (nicht in der Skizze bemaßt).', OG, 'room:r_bad_og');
 assume('Büro ragt 1,28 m über die Flurwand hinaus (6,38 m statt 5,10 m), Unterkante bündig mit Bad.', OG, 'room:r_buero');
 given('Alle Wände bleiben (Bestand). Neue Trockenbauwände werden selbst eingezeichnet (Werkzeug „Wand“, Typ „Neu (Trockenbau)“).', OG);
-assume('Türbreiten 88,5 cm (Bad 76 cm), Höhe 2,01 m, Aufschlag in den Raum.', OG);
+assume('Türbreiten 88,5 cm (Bad 94 cm laut Skizze), Höhe 2,01 m, Aufschlag in den Raum.', OG);
 given('Fenster und Dachfenster werden selbst eingezeichnet (Werkzeuge „Fenster“ und „Dachf.“, Größe wählbar, umwandelbar).', OG);
 assume('Treppe: 16 Steigungen (je ca. 18,8 cm), Treppenloch 2,98 × 1,22 m, Austritt am Podest vor dem Büro.', OG, 'stair:og_treppe');
 assume('Geschosshöhe EG→OG 3,00 m (2,60 m abgehängte Decke + ca. 15 cm Abhängung + 25 cm Decke).', OG, 'level:og.elevation');

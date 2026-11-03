@@ -195,6 +195,7 @@ export function checkLevel(level: Level, project: Project): Warning[] {
         if (g.id === f.id || NO_COLLIDE.has(g.category)) continue;
         if (g.category === 'stuhl' && (f.category === 'schreibtisch' || f.category === 'tisch')) continue;
         if (g.elevation > 900) continue; // Hängeschränke behindern Bewegungsfläche nicht
+        if (g.elevation === 0 && g.height <= 200) continue; // Podest/Stufe bis 20 cm ist begehbar
         blocked += overlapArea(z.poly, fpOf.get(g.id)!);
       }
       for (const st of level.stairs.filter((x) => x.isOpening)) {

@@ -164,7 +164,7 @@ describe('Wohnfläche nach WoFlV mit Dachschräge', () => {
     expect(rooms['Büro'].la.minHeight).toBeCloseTo(1050, 0);
     expect(rooms['Schlafzimmer'].la.minHeight).toBeCloseTo(1030, 0);
     // Deckenhöhen je Raum laut Angabe
-    expect(rooms['Bad'].la.maxHeight).toBeCloseTo(2480, 0);
+    expect(rooms['Bad'].la.maxHeight).toBeCloseTo(2630, 0);
     expect(rooms['Flur OG'].la.minHeight).toBeCloseTo(2480, 0);
     expect(rooms['Büro'].la.maxHeight).toBeCloseTo(2790, 0);
     expect(rooms['Schlafzimmer'].la.maxHeight).toBeCloseTo(2720, 0);
