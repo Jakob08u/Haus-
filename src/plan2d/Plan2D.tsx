@@ -1087,6 +1087,7 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
           )}
         </g>
       </svg>
+      {!printMode && tool === 'wall' && <WallToolBar />}
       {!printMode && (
         <div className="hud">
           {cursor ? `x ${fmtCm(cursor.x, 0)} · y ${fmtCm(cursor.y, 0)} cm` : ''} {cursorText ? ` · ${cursorText}` : ''} · Zoom {(view.s * 100).toFixed(1)} px/m
@@ -1096,6 +1097,46 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
           {tool === 'measure' && ' · Klick: Messpunkt · Esc: neu'}
         </div>
       )}
+    </div>
+  );
+}
+
+const WALL_PRESETS: { label: string; type: Wall['type']; t: number }[] = [
+  { label: 'Trockenbau 7,5', type: 'neu', t: 75 },
+  { label: 'Trockenbau 10', type: 'neu', t: 100 },
+  { label: 'Trockenbau 12,5', type: 'neu', t: 125 },
+  { label: 'Trockenbau 15', type: 'neu', t: 150 },
+  { label: 'Mauerwerk 11,5', type: 'bestand', t: 115 },
+  { label: 'Mauerwerk 24', type: 'bestand', t: 240 },
+];
+
+/** Werkzeugleiste beim Wandzeichnen: Typ und Stärke der neuen Wand */
+function WallToolBar() {
+  const settings = useStore((s) => s.project.settings);
+  const st = useStore.getState;
+  const set = (type: Wall['type'], t: number) =>
+    st().update((d) => {
+      d.settings.defaultWallType = type;
+      d.settings.defaultWallThickness = t;
+    });
+  return (
+    <div className="overlay-ctrl" style={{ alignItems: 'center' }}>
+      <span style={{ background: 'rgba(255,255,255,0.94)', padding: '3px 8px', borderRadius: 6, border: '1px solid var(--line)' }}>Neue Wand:</span>
+      <select value={settings.defaultWallType} onChange={(e) => set(e.target.value as Wall['type'], settings.defaultWallThickness)}>
+        {(Object.keys(WALL_TYPE_INFO) as Wall['type'][]).map((k) => (
+          <option key={k} value={k}>{WALL_TYPE_INFO[k].label}</option>
+        ))}
+      </select>
+      <select value={String(settings.defaultWallThickness)} onChange={(e) => set(settings.defaultWallType, Number(e.target.value))}>
+        {[...new Set([50, 75, 100, 125, 150, 175, 200, 240, 300, 365, settings.defaultWallThickness])].sort((a, b) => a - b).map((t) => (
+          <option key={t} value={t}>{String(t / 10).replace('.', ',')} cm</option>
+        ))}
+      </select>
+      {WALL_PRESETS.map((p) => (
+        <button key={p.label} className={settings.defaultWallType === p.type && settings.defaultWallThickness === p.t ? 'active' : ''} onClick={() => set(p.type, p.t)}>
+          {p.label}
+        </button>
+      ))}
     </div>
   );
 }

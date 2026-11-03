@@ -122,13 +122,20 @@ describe('Wohnfläche nach WoFlV mit Dachschräge', () => {
     expect(m2(la.above2)).toBeCloseTo(10, 2);
   });
 
-  it('Zweigeschossiges Haus: OG ohne Schrägen, Wohnfläche = Grundfläche, Geschosse übereinander', () => {
+  it('Zweigeschossiges Haus: Schrägen laut Angabe, Bad und Flur ohne Schräge, Geschosse übereinander', () => {
     const og = project.levels.find((l) => l.id === 'og')!;
     const eg = project.levels.find((l) => l.id === 'eg')!;
-    expect(og.walls.some((w) => w.slope)).toBe(false);
+    const knee = Object.fromEntries(og.walls.filter((w) => w.slope).map((w) => [w.id, w.slope!.knee]));
+    expect(knee).toEqual({ og_w_schlaf_rechts: 1870, og_w_nische_aussen: 1970, og_w_buero_oben: 1670 });
     expect(og.elevation).toBe(eg.elevation + eg.ceilingHeight + og.slabThickness);
     const cm = new CeilingModel(og);
-    for (const r of detectRooms(og)) expect(cm.livingArea(r.net).living).toBeCloseTo(r.netArea, -2);
+    const rooms = Object.fromEntries(detectRooms(og).map((r) => [r.name, { r, la: cm.livingArea(r.net) }]));
+    expect(rooms['Büro'].la.minHeight).toBeCloseTo(1670, 0);
+    expect(rooms['Schlafzimmer'].la.minHeight).toBeCloseTo(1870, 0);
+    expect(rooms['Bad'].la.minHeight).toBeCloseTo(2500, 0);
+    expect(rooms['Flur OG'].la.minHeight).toBeCloseTo(2500, 0);
+    // Büro: 1,67–2,00 m Streifen (0,33 m bei 45°) über 6,38 m zur Hälfte
+    expect(m2(rooms['Büro'].la.living)).toBeCloseTo(21.63 - 0.5 * 0.33 * 6.38, 1);
     // Treppenloch OG liegt über der Treppe im EG
     const so = og.stairs[0], se = eg.stairs[0];
     expect(Math.hypot(so.x - se.x, so.y - se.y)).toBeLessThan(5);

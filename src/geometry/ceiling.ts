@@ -19,7 +19,33 @@ export interface SlopePlane {
   side: 1 | -1;
 }
 
-const STRIP_EXT = 200; // mm über Wandenden hinaus (Ecken)
+/**
+ * Wie weit gilt eine Schräge über das Wandende hinaus? An Ecken (anschließende Querwand) bis über
+ * die halbe Wandstärke, damit die Ecke abgedeckt ist. Läuft die Außenwand in gleicher Richtung weiter
+ * (anderer Raum, eigene oder keine Schräge), endet die Schräge genau am Knoten.
+ */
+function endExtension(w: Wall, end: 'a' | 'b', walls: Wall[]): number {
+  const p = w[end];
+  const d = norm(sub(w.b, w.a));
+  let ext = 0;
+  for (const o of walls) {
+    if (o.id === w.id) continue;
+    const atEnd = dist(o.a, p) < 3 || dist(o.b, p) < 3;
+    const through = !atEnd && pointSegDistLocal(p, o.a, o.b) < 3;
+    if (!atEnd && !through) continue;
+    const od = norm(sub(o.b, o.a));
+    const collinear = Math.abs(d.x * od.y - d.y * od.x) < 0.02;
+    if (collinear && atEnd) return 0; // Fortsetzung der Wand → Schräge endet am Knoten
+    if (!collinear) ext = Math.max(ext, o.thickness / 2 + 1);
+  }
+  return ext;
+}
+function pointSegDistLocal(p: Vec2, a: Vec2, b: Vec2) {
+  const abx = b.x - a.x, aby = b.y - a.y;
+  const l2 = abx * abx + aby * aby || 1;
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * abx + (p.y - a.y) * aby) / l2));
+  return Math.hypot(p.x - (a.x + abx * t), p.y - (a.y + aby * t));
+}
 
 export function slopePitch(s: Slope): number {
   if (s.mode === 'ridge' && s.ridgeHeight != null && s.ridgeDistance && s.ridgeDistance > 0) {
@@ -49,8 +75,8 @@ export function slopePlanes(walls: Wall[]): SlopePlane[] {
       // Innenseite inkl. der Wand selbst
       { nx: inn.x, ny: inn.y, c: -(inn.x * innerA.x + inn.y * innerA.y) + w.thickness + 1 },
       // Streifen entlang der Wand
-      { nx: d.x, ny: d.y, c: -(d.x * w.a.x + d.y * w.a.y) + STRIP_EXT },
-      { nx: -d.x, ny: -d.y, c: d.x * w.a.x + d.y * w.a.y + L + STRIP_EXT },
+      { nx: d.x, ny: d.y, c: -(d.x * w.a.x + d.y * w.a.y) + endExtension(w, 'a', walls) },
+      { nx: -d.x, ny: -d.y, c: d.x * w.a.x + d.y * w.a.y + L + endExtension(w, 'b', walls) },
     ];
     planes.push({ wallId: w.id, fn, domain, knee: w.slope.knee, pitchDeg: pitch, innerA, innerB, side: s });
   }

@@ -1,6 +1,6 @@
 # Raumplaner Haus (2D + 3D)
 
-Lokale Web-App zum Durchplanen des zweigeschossigen Hauses (Erdgeschoss und Obergeschoss): Wände, Türen/Fenster, Treppe, Elektro und Leitungen, Möbel (auch per Shop-Link), Tapeten, Farben, Fliesen und Böden. Dachschrägen lassen sich bei Bedarf je Wand einstellen. Alles wird aus **einem** Projekt-JSON im 2D-Grundriss und in 3D dargestellt und laufend geprüft („Passt alles?“).
+Lokale Web-App zum Durchplanen des zweigeschossigen Hauses (Erdgeschoss und Obergeschoss mit Dachschrägen): Wände, Türen/Fenster, Treppe, Elektro und Leitungen, Möbel (auch per Shop-Link), Tapeten, Farben, Fliesen und Böden. Alles wird aus **einem** Projekt-JSON im 2D-Grundriss und in 3D dargestellt und laufend geprüft („Passt alles?“).
 
 ## Start
 
@@ -38,7 +38,7 @@ Weitere Befehle:
   | Werkzeug | Was es tut |
   |---|---|
   | Auswahl | auswählen und verschieben |
-  | Wand | zeichnen mit Fang auf Raster, 45°, Endpunkte und Wandachsen; Alt schaltet den Fang ab |
+  | Wand | zeichnen mit Fang auf Raster, 45°, Endpunkte und Wandachsen; Alt schaltet den Fang ab. Oben im Plan Typ und Stärke wählen (z. B. „Trockenbau 10“) |
   | Tür, Fenster, Durchgang | in eine Wand setzen |
   | Dachfenster | in eine Schräge setzen |
   | Treppe | als Rechteck aufziehen |
@@ -106,6 +106,7 @@ Das Haus hat zwei Geschosse. Grundlage sind die beiden geschickten Fotos:
 
 - `grundriss/eg-unten.png`: Skizze „unten“ (Erdgeschoss)
 - `grundriss/dg-oben.png`: Skizze „oben“ (Obergeschoss; der Dateiname stammt noch vom ersten Stand)
+- `grundriss/og-markiert.jpg`: dieselbe Skizze gedreht und markiert – Dachschrägen blau, Treppe gelb (wird in der App als Hintergrund des OG verwendet)
 
 Daraus erzeugt `scripts/generate-startprojekt.ts` die Datei `projekt.json`.
 
@@ -121,7 +122,16 @@ Daraus erzeugt `scripts/generate-startprojekt.ts` die Datei `projekt.json`.
 
 Alle Annahmen stehen im Tab **Annahmen** und sind im Editor violett markiert. Die wichtigsten:
 
-1. **Zwei Vollgeschosse:** Obergeschoss mit voller Raumhöhe, flache Decke bei 2,50 m, keine Dachschrägen. Geschosshöhe EG → OG 2,75 m.
+1. **Dachschrägen im OG (deine Angabe):**
+
+   | Raum | Wand | Kniestock |
+   |---|---|---|
+   | Schlafzimmer | rechts | 1,87 m |
+   | Schlafzimmer | links (Nische) | 1,97 m |
+   | Büro | oben | 1,67 m |
+   | Bad, Flur | – | keine Schräge |
+
+   Angenommen: Dachneigung 45°, flache Decke im OG bei 2,50 m, Geschosshöhe EG → OG 2,75 m.
 2. **Orientierung:** Beide Skizzen sind gleich ausgerichtet angenommen und für die Darstellung um 90° gedreht, damit im OG Büro oben, Bad rechts und Schlafzimmer unten liegt.
 3. **Lage OG über EG:** linke Außenwand bündig, das Treppenloch des OG liegt über dem Flur EG (OG dafür um 43 cm versetzt). Die Skizzen sind nicht maßstäblich – bitte prüfen und bei Bedarf mit *Ebene verschieben / drehen* korrigieren.
 4. **Treppe EG:** in der Skizze nicht eingezeichnet; angenommen im Flur EG direkt unter dem Treppenloch, 15 Steigungen.
@@ -132,7 +142,7 @@ Alle Annahmen stehen im Tab **Annahmen** und sind im Editor violett markiert. Di
    - Schlaf/Bad 15 cm
 6. **Bad OG:** 2,69 × 2,29 m, abgeleitet.
 7. **Büro:** ragt 1,28 m über die Flurwand hinaus.
-8. **Wandtyp:** Alle Wände sind als Bestand eingetragen.
+8. **Wände:** Alle Wände bleiben (Bestand, deine Angabe). Neue Trockenbauwände zeichnest du selbst ein.
 9. **Fenster:** nicht in den Skizzen, Positionen geschätzt.
 10. **Beispiele:** Möbel, Elektro und Oberflächen im Startprojekt sind Beispiele, frei löschbar.
 
