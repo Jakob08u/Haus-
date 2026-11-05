@@ -8,6 +8,7 @@ import { deleteSelection, duplicateSelection, rotateSelection } from '../actions
 import { checkLevelCached } from '../../checks/checks';
 import { fmtCm } from '../../geometry/vec';
 import { furnitureFootprint, hasCorners } from '../../geometry/openings';
+import { proxied } from '../../config';
 
 const upd = (fn: (l: Level) => void) => useStore.getState().updateLevel(fn);
 
@@ -40,7 +41,7 @@ export function FurnitureEditor({ id }: { id: string }) {
       <h3>{f.name}</h3>
       {f.imageUrl && (
         <img
-          src={f.imageUrl.startsWith('data:') ? f.imageUrl : `/api/proxy?url=${encodeURIComponent(f.imageUrl)}`}
+          src={proxied(f.imageUrl)}
           alt=""
           style={{ width: '100%', maxHeight: 160, objectFit: 'contain', background: '#fafafa', borderRadius: 6, border: '1px solid var(--line)' }}
         />

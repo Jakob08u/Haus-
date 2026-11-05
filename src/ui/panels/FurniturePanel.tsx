@@ -4,6 +4,8 @@ import { CATEGORY_INFO } from '../../model/defaults';
 import type { Furniture, FurnitureCategory } from '../../model/types';
 import { NumInput, Field, TextInput, Select } from '../inputs';
 import { dominantColor } from '../background';
+import { STATIC, proxied } from '../../config';
+import { extractInBrowser, textAsHtml } from '../../import/localExtract';
 
 interface ProductData {
   name?: string;
@@ -44,6 +46,7 @@ export default function FurniturePanel() {
   const tpl = useStore((s) => s.toolOpts.furnitureTemplate);
   const st = useStore.getState;
   const [url, setUrl] = useState('');
+  const [pasted, setPasted] = useState('');
   const [busy, setBusy] = useState(false);
   const [res, setRes] = useState<FetchResult | null>(null);
   const [draft, setDraft] = useState<Partial<Furniture> | null>(null);
@@ -86,8 +89,8 @@ export default function FurniturePanel() {
       color: info.color,
     };
     setDraft(dr);
-    if (d.image) {
-      const c = await dominantColor(`/api/proxy?url=${encodeURIComponent(d.image)}`);
+    if (d.image && !STATIC) {
+      const c = await dominantColor(proxied(d.image));
       if (c) setDraft((x) => (x ? { ...x, color: c } : x));
     }
   };
@@ -113,11 +116,24 @@ export default function FurniturePanel() {
     setBusy(true);
     try {
       const html = await file.text();
-      const r = await fetch('/api/parse-html', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ html, url: url || 'https://unbekannt.invalid/' }) });
-      const j = await r.json();
-      await applyResult({ ok: true, source: 'html', data: j.data });
+      const data = (await extractInBrowser(html, url.trim())) as ProductData;
+      await applyResult({ ok: true, source: 'html', data });
     } catch (e) {
       setRes({ ok: false, source: 'none', message: 'HTML konnte nicht gelesen werden: ' + (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** kopierten Text der Produktseite auslesen (geht ohne Server, z. B. auf dem iPad) */
+  const parsePasted = async () => {
+    if (!pasted.trim()) return;
+    setBusy(true);
+    try {
+      const data = (await extractInBrowser(textAsHtml(pasted), url.trim())) as ProductData;
+      await applyResult({ ok: true, source: 'text', data });
+    } catch (e) {
+      setRes({ ok: false, source: 'none', message: 'Text konnte nicht gelesen werden: ' + (e as Error).message });
     } finally {
       setBusy(false);
     }
@@ -137,7 +153,25 @@ export default function FurniturePanel() {
         </div>
       )}
 
-      <h4>Aus Link importieren</h4>
+      <h4>{STATIC ? 'Aus Produktseite übernehmen' : 'Aus Link importieren'}</h4>
+      {STATIC ? (
+        <>
+          <p className="hint">
+            Auf der Produktseite den Bereich mit den Maßen markieren und kopieren (oder alles: Text auswählen → „Alles auswählen“), hier einfügen und auslesen. Diese Version läuft ohne Server und ruft keine Shops ab.
+          </p>
+          <input type="url" placeholder="Link zur Produktseite (optional, für die Möbelliste)" value={url} onChange={(e) => setUrl(e.target.value)} style={{ width: '100%' }} />
+          <textarea placeholder={'z. B.\nBILLY Bücherregal\nBreite: 80 cm, Tiefe: 28 cm, Höhe: 202 cm\n59,99 €'} value={pasted} onChange={(e) => setPasted(e.target.value)} rows={5} style={{ width: '100%', marginTop: 6, font: 'inherit' }} />
+          <div className="row">
+            <button className="primary" disabled={busy || !pasted.trim()} onClick={parsePasted}>{busy ? '…' : 'Text auslesen'}</button>
+            <label>
+              <input type="file" accept=".html,.htm,text/html" style={{ display: 'none' }} onChange={(e) => e.target.files?.[0] && uploadHtml(e.target.files[0])} />
+              <span className="hint" style={{ cursor: 'pointer', textDecoration: 'underline' }}>oder HTML-Datei …</span>
+            </label>
+          </div>
+          {res && !res.ok && <div className="warnitem err">{res.message}</div>}
+        </>
+      ) : (
+      <>
       <div className="row">
         <input type="url" placeholder="https://www.ikea.com/de/de/p/…" value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && fetchUrl()} style={{ flex: 1, minWidth: 0 }} />
         <button className="primary" disabled={busy} onClick={() => fetchUrl()}>{busy ? '…' : 'Abrufen'}</button>
@@ -163,10 +197,17 @@ export default function FurniturePanel() {
           </label>
         </div>
       )}
+      <details>
+        <summary className="hint">oder Text der Produktseite einfügen</summary>
+        <textarea value={pasted} onChange={(e) => setPasted(e.target.value)} rows={4} style={{ width: '100%', font: 'inherit' }} />
+        <button disabled={busy || !pasted.trim()} onClick={parsePasted}>Text auslesen</button>
+      </details>
+      </>
+      )}
       {draft && (
         <div className="item" style={{ cursor: 'default' }}>
           <div style={{ display: 'flex', gap: 8 }}>
-            {draft.imageUrl && <img className="thumb" style={{ width: 72, height: 72 }} src={`/api/proxy?url=${encodeURIComponent(draft.imageUrl)}`} alt="" />}
+            {draft.imageUrl && <img className="thumb" style={{ width: 72, height: 72 }} src={proxied(draft.imageUrl)} alt="" />}
             <div style={{ flex: 1 }}>
               <b>{draft.name}</b>
               <div className="sub">
@@ -197,7 +238,7 @@ export default function FurniturePanel() {
               ))}
             </details>
           )}
-          <Field label="Farbe"><input type="color" value={draft.color ?? '#cccccc'} onChange={(e) => setDraft({ ...draft, color: e.target.value })} /><span className="hint">aus Produktbild</span></Field>
+          <Field label="Farbe"><input type="color" value={draft.color ?? '#cccccc'} onChange={(e) => setDraft({ ...draft, color: e.target.value })} />{draft.imageUrl && !STATIC && <span className="hint">aus Produktbild</span>}</Field>
           <Field label="Preis"><NumInput value={draft.price} factor={1} digits={2} unit="€" onChange={(v) => setDraft({ ...draft, price: v })} /></Field>
           <button className="primary" disabled={missing.length > 0} onClick={() => place(draft)}>Im Grundriss platzieren</button>
         </div>

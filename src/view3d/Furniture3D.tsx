@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { useGLTF } from '@react-three/drei';
 import type { Furniture } from '../model/types';
 import { furnitureLocalOutline, hasCorners } from '../geometry/openings';
+import { asset, proxied } from '../config';
 
 const S = 0.001;
 
@@ -259,8 +260,8 @@ class Boundary extends Component<{ fallback: ReactNode; children: ReactNode }, {
 }
 
 function GlbModel({ f }: { f: Furniture }) {
-  const url = f.modelUrl!.startsWith('data:') ? f.modelUrl! : `/api/proxy?url=${encodeURIComponent(f.modelUrl!)}`;
-  const gltf = useGLTF(url, '/draco/');
+  const url = proxied(f.modelUrl!);
+  const gltf = useGLTF(url, asset('draco/'));
   const obj = useMemo(() => {
     const o = gltf.scene.clone(true);
     const box = new THREE.Box3().setFromObject(o);

@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../store/store';
 import { exportProjectJson, importProjectFile, loadStartProject } from '../store/persist';
 import { emptyProject, emptyLevel } from '../model/defaults';
 import type { LayerKey } from '../model/types';
 import { TextInput } from './inputs';
+import { STATIC } from '../config';
 
 const LAYER_LABELS: [LayerKey, string][] = [
   ['grundriss', 'Wände/Öffnungen/Treppen'],
@@ -35,6 +36,15 @@ export function TopBar() {
   const st = useStore.getState;
   const fileRef = useRef<HTMLInputElement>(null);
   const [openMenu, setOpenMenu] = useState<'file' | 'layers' | null>(null);
+  // Menü schließen, wenn daneben getippt wird (iPad kennt kein „Maus verlässt“)
+  useEffect(() => {
+    if (!openMenu) return;
+    const h = (e: PointerEvent) => {
+      if (!(e.target as Element)?.closest?.('.dropdown')) setOpenMenu(null);
+    };
+    document.addEventListener('pointerdown', h);
+    return () => document.removeEventListener('pointerdown', h);
+  }, [openMenu]);
 
   return (
     <div className="topbar" onMouseLeave={() => setOpenMenu(null)}>
@@ -47,13 +57,15 @@ export function TopBar() {
             <div className="list">
               <button onClick={() => exportProjectJson(st().project)}>Projekt speichern (JSON) …</button>
               <button onClick={() => fileRef.current?.click()}>Projekt öffnen (JSON) …</button>
-              <button
-                onClick={async () => {
-                  if (confirm('Startprojekt aus dem Grundriss neu laden? Aktuelle Änderungen gehen verloren (vorher speichern!).')) st().setProject(await loadStartProject(), true);
-                }}
-              >
-                Startprojekt (Grundriss) laden
-              </button>
+              {!STATIC && (
+                <button
+                  onClick={async () => {
+                    if (confirm('Startprojekt aus dem Grundriss neu laden? Aktuelle Änderungen gehen verloren (vorher speichern!).')) st().setProject(await loadStartProject(), true);
+                  }}
+                >
+                  Startprojekt (Grundriss) laden
+                </button>
+              )}
               <button
                 onClick={() => {
                   if (confirm('Leeres Projekt anlegen? Aktuelle Änderungen gehen verloren (vorher speichern!).')) st().setProject(emptyProject(), true);

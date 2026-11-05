@@ -16,6 +16,8 @@ import { add, bbox, dist, mul, norm, perp, pointInPolygon, rotate, sub, uid, fmt
 import { LINE_INFO } from '../model/defaults';
 import { checkLevelCached } from '../checks/checks';
 import { verticalZones, horizontalZonesAt, isWorktopRoom } from '../checks/zones';
+import { isTouchDevice } from '../ui/touch';
+import { Joystick, walkInput } from './Joystick';
 
 RectAreaLightUniformsLib.init();
 
@@ -26,6 +28,7 @@ export default function View3D() {
   const level = useLevel();
   const v3 = useStore((s) => s.view3d);
   const tool = useStore((s) => s.tool);
+  const touch = useMemo(isTouchDevice, []);
   const measure = useStore((s) => s.measure);
   const [cut, setCut] = useState<number | null>(null);
   const [, force] = useState(0);
@@ -131,8 +134,15 @@ export default function View3D() {
             ))}
         </div>
       )}
+      {v3.mode === 'walk' && touch && <Joystick />}
       <div className="hud">
-        {v3.mode === 'walk' ? 'Begehen: ins Bild klicken · W/A/S/D laufen · Maus schauen · Shift schneller · Esc beenden' : 'Linke Maus drehen · Rechte Maus verschieben · Rad zoomen · Möbel anklicken und ziehen'}
+        {touch
+          ? v3.mode === 'walk'
+            ? 'Begehen: Steuerkreuz unten links zum Laufen · im Bild wischen zum Umschauen'
+            : 'Ein Finger drehen · zwei Finger zoomen und verschieben · Möbel antippen und ziehen'
+          : v3.mode === 'walk'
+            ? 'Begehen: ins Bild klicken · W/A/S/D laufen · Maus schauen · Shift schneller · Esc beenden'
+            : 'Linke Maus drehen · Rechte Maus verschieben · Rad zoomen · Möbel anklicken und ziehen'}
         {tool === 'measure' && ` · Messen: Punkte auf Flächen anklicken (${measure.points.length})`}
       </div>
     </div>
@@ -730,7 +740,45 @@ function Controls({ level, camRef }: { level: Level; camRef: React.MutableRefObj
 }
 
 function WalkControls({ level, eye }: { level: Level; eye: number }) {
-  const { camera } = useThree();
+  const { camera, gl, invalidate } = useThree();
+  const touch = useMemo(isTouchDevice, []);
+  // Touch: im Bild wischen zum Umschauen (kein Mauszeiger-Fang auf dem iPad)
+  useEffect(() => {
+    if (!touch) return;
+    const el = gl.domElement;
+    el.style.touchAction = 'none';
+    const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+    let last: { id: number; x: number; y: number } | null = null;
+    const down = (e: PointerEvent) => {
+      if (last) return;
+      last = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    };
+    const move = (e: PointerEvent) => {
+      if (!last || e.pointerId !== last.id) return;
+      const dx = e.clientX - last.x, dy = e.clientY - last.y;
+      last.x = e.clientX;
+      last.y = e.clientY;
+      euler.setFromQuaternion(camera.quaternion);
+      euler.y += dx * 0.005;
+      euler.x = Math.max(-1.45, Math.min(1.45, euler.x + dy * 0.005));
+      camera.quaternion.setFromEuler(euler);
+      invalidate();
+    };
+    const up = (e: PointerEvent) => {
+      if (last && e.pointerId === last.id) last = null;
+    };
+    el.addEventListener('pointerdown', down);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+    return () => {
+      el.removeEventListener('pointerdown', down);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      walkInput.x = walkInput.y = 0;
+    };
+  }, [touch]);
   const keys = useRef<Record<string, boolean>>({});
   const D = derive(level);
   const wallPolys = useMemo(() => [...D.footprints.values()].map((f) => f.polygon), [D]);
@@ -763,8 +811,15 @@ function WalkControls({ level, eye }: { level: Level; eye: number }) {
     if (k.KeyS || k.ArrowDown) mv.sub(fwd);
     if (k.KeyD || k.ArrowRight) mv.add(right);
     if (k.KeyA || k.ArrowLeft) mv.sub(right);
+    // Steuerkreuz (Touch): Richtung aus der Auslenkung, Tempo wächst mit ihr (ganz außen: schneller)
+    const joy = Math.min(1, Math.hypot(walkInput.x, walkInput.y));
+    let tempo = 1;
+    if (joy > 0.08) {
+      mv.addScaledVector(fwd, walkInput.y).addScaledVector(right, walkInput.x);
+      tempo = joy > 0.95 ? 1.8 : Math.max(0.3, joy);
+    }
     if (mv.lengthSq() > 0) {
-      mv.normalize().multiplyScalar(speed);
+      mv.normalize().multiplyScalar(speed * tempo);
       const nx = camera.position.x + mv.x, nz = camera.position.z + mv.z;
       if (!blocked(nx / S, camera.position.z / S)) camera.position.x = nx;
       if (!blocked(camera.position.x / S, nz / S)) camera.position.z = nz;
@@ -773,5 +828,5 @@ function WalkControls({ level, eye }: { level: Level; eye: number }) {
     const ch = D.ceiling.heightAt({ x: camera.position.x / S, y: camera.position.z / S });
     camera.position.y = (level.elevation + Math.min(eye, ch - 120)) * S;
   });
-  return <PointerLockControls makeDefault />;
+  return touch ? null : <PointerLockControls makeDefault />;
 }

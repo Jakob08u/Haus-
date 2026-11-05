@@ -21,8 +21,39 @@ Weitere Befehle:
 | `npm run serve` | Produktions-Build bauen und alles über einen Port (5173) ausliefern |
 | `npm run startprojekt` | `projekt.json` neu aus der Skizze erzeugen (`scripts/generate-startprojekt.ts`) |
 | `npm run typecheck` | TypeScript prüfen |
+| `npm run build:pages` | öffentliche Version ohne Server und ohne Grundriss bauen (für GitHub Pages / iPad) |
 
 **Optional für JS-lastige Shops:** Der Server versucht bei leeren oder blockierten Seiten einen Abruf per Playwright. Dafür einmalig `npx playwright install chromium` ausführen. Ohne Playwright funktioniert alles andere normal.
+
+## Auf dem iPad (ohne Rechner, über GitHub Pages)
+
+Eine öffentliche Version läuft komplett im Browser, auch auf dem iPad und ohne Heimnetz. Sie enthält **nicht** deinen Grundriss: Den öffnest du auf dem iPad aus einer Datei. Er bleibt nur auf dem Gerät.
+
+1. **Einmalig auf GitHub einschalten:** Repository → *Settings* → *Pages* → bei *Source* „GitHub Actions“ wählen.
+   - Danach baut GitHub die Seite bei jedem Push selbst (Reiter *Actions* → „GitHub Pages“).
+   - Adresse: `https://<github-name>.github.io/<repository>/`, hier `https://jakob08u.github.io/Haus-/`.
+   - Bei einem privaten Repository geht Pages nur mit einem bezahlten GitHub-Plan. Die Seite selbst ist dann trotzdem öffentlich, enthält aber keine Projektdaten und ist für Suchmaschinen gesperrt (`noindex`).
+2. **Auf dem iPad öffnen:** Adresse in Safari öffnen → *Teilen* → **Zum Home-Bildschirm**.
+   - Dann startet der Planer wie eine App im Vollbild, auch ohne Internet.
+   - Safari löscht die Daten einer Home-Bildschirm-App nicht nach einigen Wochen, wie es bei normalen Webseiten passieren kann.
+3. **Projekt laden:** `projekt.json` in der Dateien-App bzw. in iCloud Drive ablegen. Beim ersten Start „Projekt öffnen (JSON-Datei)“ wählen, später über *Datei → Projekt öffnen*.
+4. **Sichern:** *Datei → Projekt speichern (JSON)* legt eine Kopie in *Dateien* ab. So kommt der Stand auch zurück auf den Rechner.
+
+**Bedienung mit dem Finger:**
+
+| Wo | Geste |
+|---|---|
+| Grundriss | ein Finger auf freier Fläche verschieben, zwei Finger zoomen und verschieben |
+| Grundriss | Wände, Leitungen und Messungen mit dem Knopf „✓ Fertig“ abschließen (statt Doppelklick/Enter) |
+| 3D | ein Finger drehen, zwei Finger zoomen und verschieben |
+| 3D, *Begehen* | Steuerkreuz unten links zum Laufen (ganz außen: schneller), im Bild wischen zum Umschauen |
+| Seitenleiste | mit dem Knopf **⟩** am Rand ein- und ausblenden (mehr Platz im Hochformat) |
+
+**Unterschiede zur lokalen Version:**
+- Kein Abruf von Shop-Links, weil es keinen Server gibt. Stattdessen den Text der Produktseite mit den Maßen kopieren und unter *Möbel → Aus Produktseite übernehmen* einfügen. Maße, Preis und Kategorie werden im Browser ausgelesen. Eine gespeicherte HTML-Seite geht auch.
+- Die Farbe aus dem Produktbild und Hersteller-3D-Modelle gibt es nur, wenn der Shop sie direkt freigibt.
+
+Selbst bauen: `npm run build:pages` erzeugt `dist-pages/`, `npm run preview:pages` zeigt die Seite lokal an.
 
 ## Datenschutz
 
@@ -30,6 +61,7 @@ Weitere Befehle:
 - Das Projekt wird automatisch im Browser gespeichert (IndexedDB). Über *Datei → Projekt speichern/öffnen* geht es als JSON-Datei hin und zurück.
 - Der lokale Server ruft nur die eine Produktseite ab, die du eingibst, und gibt die zugehörigen Bilder bzw. 3D-Modelle an die App weiter (wegen CORS). Es wird nichts gespeichert oder weitergesendet.
 - Alle Bibliotheken liegen lokal, auch der Draco-Decoder für 3D-Modelle. Es werden keine CDNs geladen.
+- Die öffentliche Version (GitHub Pages) enthält keine Projektdaten und lädt nichts nach. Sie speichert nur im Browser des Geräts, auch für die Offline-Nutzung (Service Worker).
 
 ## Bedienung in Kürze
 

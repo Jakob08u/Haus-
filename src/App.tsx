@@ -1,6 +1,9 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useStore } from './store/store';
-import { loadInitialProject, startAutosave } from './store/persist';
+import { loadInitialProject, requestPersistentStorage, startAutosave } from './store/persist';
+import { STATIC } from './config';
+import { Welcome } from './ui/Welcome';
+import { isTouchDevice } from './ui/touch';
 import { Plan2D } from './plan2d/Plan2D';
 import { TopBar } from './ui/TopBar';
 import { ToolPalette } from './ui/ToolPalette';
@@ -14,12 +17,17 @@ export function App() {
   const view = useStore((s) => s.view);
   const status = useStore((s) => s.status);
   const [err, setErr] = useState<string | null>(null);
+  const [welcome, setWelcome] = useState(false);
+  const [sideOpen, setSideOpen] = useState(true);
+  const touch = isTouchDevice();
 
   useEffect(() => {
     loadInitialProject()
-      .then((p) => {
+      .then(({ project: p, fresh }) => {
         useStore.getState().setProject(p);
         startAutosave();
+        if (fresh && STATIC) setWelcome(true);
+        void requestPersistentStorage();
       })
       .catch((e) => setErr(String(e)));
   }, []);
@@ -72,7 +80,7 @@ export function App() {
   return (
     <div className="app">
       <TopBar />
-      <div className="main">
+      <div className={`main${sideOpen ? '' : ' side-closed'}`}>
         <ToolPalette />
         <div className="viewport">
           {(view === '2d' || view === 'split') && (
@@ -88,12 +96,20 @@ export function App() {
             </div>
           )}
         </div>
-        <SidePanel />
+        {sideOpen && <SidePanel />}
+        <button className="side-toggle" onClick={() => setSideOpen(!sideOpen)} title={sideOpen ? 'Seitenleiste ausblenden' : 'Seitenleiste einblenden'}>
+          {sideOpen ? '⟩' : '⟨'}
+        </button>
       </div>
       <div className="statusbar">
         <span className="grow">{status}</span>
-        <span>Strg+Z/Y Rückgängig · Entf Löschen · R drehen 90° · Q/E ±15° · Pfeile verschieben · Leertaste+Ziehen schwenken</span>
+        {touch ? (
+          <span>Zwei Finger: zoomen und verschieben · Objekt antippen zum Bearbeiten</span>
+        ) : (
+          <span>Strg+Z/Y Rückgängig · Entf Löschen · R drehen 90° · Q/E ±15° · Pfeile verschieben · Leertaste+Ziehen schwenken</span>
+        )}
       </div>
+      {welcome && <Welcome onClose={() => setWelcome(false)} />}
     </div>
   );
 }

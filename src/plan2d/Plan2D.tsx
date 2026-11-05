@@ -70,6 +70,13 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
   const [stairDraft, setStairDraft] = useState<{ a: Vec2; b: Vec2 } | null>(null);
   const [space, setSpace] = useState(false);
   const fittedFor = useRef<string>('');
+  // Touch (iPad): Finger verfolgen, zwei Finger = zoomen/verschieben
+  const touches = useRef(new Map<number, Vec2>());
+  const pinch = useRef<{ d0: number; c0: Vec2; v0: View } | null>(null);
+  /** nach einer Zwei-Finger-Geste nichts mehr auslösen, bis alle Finger weg sind */
+  const touchBlock = useRef(false);
+  /** Zustand beim ersten Finger – wird zurückgesetzt, wenn daraus eine Zwei-Finger-Geste wird */
+  const touchSnap = useRef<{ past: number; chain: Vec2[]; linePts: LinePoint[]; dimStart: Vec2 | null; calib: Vec2[]; stairDraft: { a: Vec2; b: Vec2 } | null; measure: typeof measure.points } | null>(null)
 
   // Größe beobachten
   useEffect(() => {
@@ -232,8 +239,53 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
     return { x: Math.round(p.x), y: Math.round(p.y), z };
   };
 
+  const local = (e: { clientX: number; clientY: number }): Vec2 => {
+    const r = svgRef.current!.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  };
+
+  const startPinch = () => {
+    // was der erste Finger begonnen hat, zurücknehmen
+    const d = drag.current;
+    drag.current = null;
+    if (d && d.kind !== 'pan') st().endGesture();
+    const snapBefore = touchSnap.current;
+    if (snapBefore) {
+      const n = st().past.length - snapBefore.past;
+      for (let i = 0; i < n; i++) st().undo();
+      setChain(snapBefore.chain);
+      setLinePts(snapBefore.linePts);
+      setDimStart(snapBefore.dimStart);
+      setCalib(snapBefore.calib);
+      setStairDraft(snapBefore.stairDraft);
+      st().setMeasure({ points: snapBefore.measure });
+      touchSnap.current = null;
+    }
+    const [a, b] = [...touches.current.values()];
+    pinch.current = { d0: Math.max(1, dist(a, b)), c0: mul(add(a, b), 0.5), v0: viewRef.current };
+    touchBlock.current = true;
+    setSnap(null);
+  };
+
   const onPointerDown = (e: React.PointerEvent) => {
     (e.target as Element).setPointerCapture?.(e.pointerId);
+    if (e.pointerType === 'touch') {
+      // erster Finger einer neuen Berührung: alte (evtl. verlorene) Finger vergessen
+      if (e.isPrimary) {
+        touches.current.clear();
+        pinch.current = null;
+        touchBlock.current = false;
+      }
+      touches.current.set(e.pointerId, local(e));
+      if (touches.current.size === 1) {
+        touchBlock.current = false;
+        touchSnap.current = { past: st().past.length, chain, linePts, dimStart, calib, stairDraft, measure: measure.points };
+      } else if (touches.current.size === 2 && !pinch.current) {
+        startPinch();
+        return;
+      }
+    }
+    if (touchBlock.current) return;
     const p = toMM(e);
     const hit = (e.target as Element).closest('[data-kind]') as HTMLElement | null;
     const hk = hit?.dataset.kind as Selection['kind'] | undefined;
@@ -460,6 +512,19 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    if (e.pointerType === 'touch' && touches.current.has(e.pointerId)) {
+      touches.current.set(e.pointerId, local(e));
+      const pc = pinch.current;
+      if (pc && touches.current.size >= 2) {
+        const [a, b] = [...touches.current.values()];
+        const c = mul(add(a, b), 0.5);
+        const sNew = Math.min(2, Math.max(0.005, (pc.v0.s * dist(a, b)) / pc.d0));
+        const wx = (pc.c0.x - pc.v0.tx) / pc.v0.s, wy = (pc.c0.y - pc.v0.ty) / pc.v0.s;
+        setView({ s: sNew, tx: c.x - wx * sNew, ty: c.y - wy * sNew });
+        return;
+      }
+    }
+    if (touchBlock.current) return;
     const p = toMM(e);
     setCursor(p);
     st().setCursor(p);
@@ -620,7 +685,15 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
     }
   };
 
-  const onPointerUp = () => {
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (e.pointerType === 'touch') {
+      touches.current.delete(e.pointerId);
+      if (touches.current.size < 2) pinch.current = null;
+      if (touchBlock.current) {
+        if (touches.current.size === 0) touchBlock.current = false;
+        return;
+      }
+    }
     const dr = drag.current;
     drag.current = null;
     if (!dr) return;
@@ -705,6 +778,7 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
         onPointerLeave={() => {
           setCursor(null);
           st().setCursor(null);
@@ -1120,6 +1194,22 @@ export function Plan2D({ printMode = false }: { printMode?: boolean }) {
       {!printMode && tool === 'wall' && <WallToolBar />}
       {!printMode && tool === 'window' && <WindowToolBar />}
       {!printMode && tool === 'roofWindow' && <RoofWindowToolBar />}
+      {!printMode && (() => {
+        // Abschließen ohne Tastatur (iPad): statt Doppelklick / Enter / Esc
+        const btn = (label: string, fn: () => void, primary = false) => (
+          <button key={label} className={primary ? 'primary' : ''} onClick={fn}>{label}</button>
+        );
+        const items: JSX.Element[] = [];
+        if (tool === 'wall' && chain.length > 0) items.push(btn('✓ Wand fertig', () => setChain([]), true));
+        if (tool === 'line' && linePts.length > 0) {
+          if (linePts.length >= 2) items.push(btn('✓ Leitung fertig', () => finishLine(), true));
+          items.push(btn('Abbrechen', () => setLinePts([])));
+        }
+        if (tool === 'measure' && measure.points.length > 0) items.push(btn('Messung löschen', () => st().setMeasure({ points: [] })));
+        if (tool === 'dimension' && dimStart) items.push(btn('Abbrechen', () => setDimStart(null)));
+        if (tool === 'calibrate' && calib.length > 0) items.push(btn('Abbrechen', () => setCalib([])));
+        return items.length ? <div className="finishbar">{items}</div> : null;
+      })()}
       {!printMode && (
         <div className="hud">
           {cursor ? `x ${fmtCm(cursor.x, 0)} · y ${fmtCm(cursor.y, 0)} cm` : ''} {cursorText ? ` · ${cursorText}` : ''} · Zoom {(view.s * 100).toFixed(1)} px/m

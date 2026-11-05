@@ -8,6 +8,8 @@
     "dev": "npm start",
     "build": "tsc --noEmit -p . && vite build",
     "serve": "vite build && tsx server/index.ts --prod",
+    "build:pages": "tsc --noEmit -p . && vite build --mode pages --outDir dist-pages",
+    "preview:pages": "vite preview --mode pages --outDir dist-pages --port 4173",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p .",
     "startprojekt": "tsx scripts/generate-startprojekt.ts"

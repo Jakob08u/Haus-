@@ -2,20 +2,35 @@ import { get as idbGet, set as idbSet } from 'idb-keyval';
 import type { Project } from '../model/types';
 import { useStore } from './store';
 import { migrate } from '../model/migrate';
+import { emptyProject } from '../model/defaults';
+import { STATIC } from '../config';
 
 const KEY = 'raumplaner-projekt-v8';
 
-export async function loadInitialProject(): Promise<Project> {
+/** gespeichertes Projekt oder Startprojekt; `fresh` = auf diesem Gerät noch nichts gespeichert */
+export async function loadInitialProject(): Promise<{ project: Project; fresh: boolean }> {
   try {
     const saved = await idbGet(KEY);
-    if (saved && typeof saved === 'object' && Array.isArray((saved as Project).levels)) return migrate(saved as Project);
+    if (saved && typeof saved === 'object' && Array.isArray((saved as Project).levels)) return { project: migrate(saved as Project), fresh: false };
   } catch (e) {
     console.warn('IndexedDB nicht verfügbar', e);
   }
-  return loadStartProject();
+  return { project: await loadStartProject(), fresh: true };
+}
+
+/** Browser bitten, die Daten nicht automatisch zu löschen (Safari/iPad: v. a. als Home-Bildschirm-App) */
+export async function requestPersistentStorage(): Promise<boolean> {
+  try {
+    if (await navigator.storage?.persisted?.()) return true;
+    return (await navigator.storage?.persist?.()) ?? false;
+  } catch {
+    return false;
+  }
 }
 
 export async function loadStartProject(): Promise<Project> {
+  // Die öffentliche Version (GitHub Pages) enthält den privaten Grundriss nicht.
+  if (STATIC) return emptyProject();
   const mod = await import('../../projekt.json');
   return migrate(structuredClone((mod as any).default ?? mod) as Project);
 }

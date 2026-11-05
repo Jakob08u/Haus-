@@ -31,11 +31,15 @@ input[type='number'] { width: 80px; }
 input[type='color'] { padding: 0; width: 34px; height: 24px; }
 input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 
-.app { display: grid; grid-template-rows: auto 1fr auto; height: 100%; }
+.app { display: grid; grid-template-rows: auto 1fr auto; height: 100%; height: 100dvh; box-sizing: border-box; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 .topbar { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .topbar .title { font-weight: 600; margin-right: 8px; }
 .topbar .sep { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
 .main { display: grid; grid-template-columns: 52px 1fr 360px; min-height: 0; }
+.main { position: relative; }
+.main.side-closed { grid-template-columns: 52px 1fr; }
+.side-toggle { position: absolute; top: 50%; right: 0; transform: translateY(-50%); width: 18px; height: 56px; padding: 0; border-radius: 6px 0 0 6px; z-index: 7; background: rgba(255,255,255,0.95); border: 1px solid var(--line); border-right: none; font-size: 13px; color: #475569; }
+.main:not(.side-closed) .side-toggle { right: 360px; }
 .palette { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 3px; padding: 6px 4px; overflow-y: auto; }
 .palette button { width: 44px; height: 40px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; line-height: 1.1; }
 .palette button .ic { font-size: 16px; }
@@ -75,7 +79,8 @@ table.tbl td.num, table.tbl th.num { text-align: right; white-space: nowrap; }
 .warnitem.assume { border-left-color: var(--assume); background: #faf5ff; }
 .warnitem.info { border-left-color: var(--accent); background: #f5f8ff; }
 .overlay-ctrl { position: absolute; top: 8px; left: 8px; display: flex; gap: 4px; flex-wrap: wrap; z-index: 5; }
-.overlay-ctrl.right { left: auto; right: 8px; }
+.overlay-ctrl:not(.right) { max-width: calc(100% - 270px); }
+.overlay-ctrl.right { left: auto; right: 8px; max-width: 250px; justify-content: flex-end; }
 .overlay-ctrl button, .overlay-ctrl select { background: rgba(255,255,255,0.94); }
 .hud { position: absolute; bottom: 8px; left: 8px; background: rgba(255,255,255,0.92); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font-size: 12px; z-index: 5; pointer-events: none; }
 .plan2d { width: 100%; height: 100%; display: block; background: #fbfbfc; user-select: none; touch-action: none; }
@@ -89,3 +94,20 @@ table.tbl td.num, table.tbl th.num { text-align: right; white-space: nowrap; }
 .swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.15); display: inline-block; vertical-align: middle; }
 .modal-bg { position: fixed; inset: 0; background: rgba(15,23,42,0.35); display: flex; align-items: center; justify-content: center; z-index: 100; }
 .modal { background: #fff; border-radius: 10px; padding: 16px; width: 420px; max-width: 95vw; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+
+/* Willkommen (öffentliche Version) */
+.welcome { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+.welcome-card { background: #fff; border-radius: 12px; padding: 20px 22px; max-width: 520px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.25); }
+.welcome-card h2 { margin: 0 0 8px; font-size: 20px; }
+.welcome-card ul { padding-left: 18px; margin: 0; }
+.welcome-card li { margin: 4px 0; }
+
+/* Touch (iPad): größere Ziele, kein automatisches Hineinzoomen in Eingabefelder */
+@media (pointer: coarse) {
+  input, select, textarea { font-size: 16px; }
+  .topbar button, .side button { min-height: 34px; }
+}
+.finishbar { position: absolute; left: 50%; bottom: 44px; transform: translateX(-50%); display: flex; gap: 8px; z-index: 6; background: rgba(255,255,255,0.95); border: 1px solid var(--line); border-radius: 10px; padding: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+.finishbar button { min-height: 36px; padding: 0 14px; }
+.joystick { position: absolute; left: 22px; bottom: 48px; width: 132px; height: 132px; border-radius: 50%; background: rgba(255,255,255,0.35); border: 2px solid rgba(255,255,255,0.85); box-shadow: 0 2px 12px rgba(0,0,0,0.2); z-index: 6; touch-action: none; display: flex; align-items: center; justify-content: center; }
+.joystick-knob { width: 56px; height: 56px; border-radius: 50%; background: rgba(37,99,235,0.85); box-shadow: 0 2px 8px rgba(0,0,0,0.3); pointer-events: none; }
