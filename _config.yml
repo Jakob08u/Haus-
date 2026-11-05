@@ -1,0 +1,21 @@
+# Nur für GitHub Pages im Modus „Deploy from a branch“ (Jekyll):
+# Projektdaten, Skizzen und Quelltext NICHT veröffentlichen.
+# Richtig ist Settings → Pages → Source: „GitHub Actions“ – dann wird nur die App
+# ohne Grundriss veröffentlicht (.github/workflows/pages.yml) und diese Datei ist ohne Wirkung.
+exclude:
+  - projekt.json
+  - grundriss
+  - public
+  - scripts
+  - server
+  - src
+  - tests
+  - package.json
+  - package-lock.json
+  - tsconfig.json
+  - vite.config.ts
+  - README.md
+  - index.html
+  - node_modules
+  - dist
+  - dist-pages
